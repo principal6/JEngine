@@ -1,0 +1,39 @@
+#state [normal]
+{
+	set_value('WalkSpeed', 1.2);
+
+	if (DistanceToEnemy > 1.0 && DistanceToEnemy <= 3.0)
+	{
+		WalkTo(EnemyPosition.x, EnemyPosition.y, EnemyPosition.z);
+	}
+	else if (DistanceToEnemy <= 1.0)
+	{
+		set_state('combat');
+	}
+	else
+	{
+		Wait(random(3.0, 6.0));
+		RotateYaw(random(-1.0, +1.0));
+		Walk(random(1.0, 2.0));
+	}
+}
+
+#state [combat]
+{
+	if (DistanceToEnemy >= 10.0)
+	{
+		set_state('normal');
+	}
+	else if (DistanceToEnemy > 1.0)
+	{
+		WalkTo(EnemyPosition.x, EnemyPosition.y, EnemyPosition.z);
+	}
+	else
+	{
+		RotateYawTo(EnemyPosition.x, EnemyPosition.y, EnemyPosition.z);
+		Attack();
+	}
+}
+
+
+
