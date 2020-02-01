@@ -45,12 +45,12 @@ void CGame::CreateSpriteFont(const wstring& FontFileName)
 
 void CGame::Destroy()
 {
-	DestroyWindow(m_hWnd);
-
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
+	DestroyWindow(m_hWnd);
+	
 	m_IsDestroyed = true;
 }
 
@@ -4715,6 +4715,8 @@ void CGame::DrawEditorGUI()
 	if (m_eMode == EMode::Edit)
 	{
 		DrawEditorGUIMenuBar();
+
+		if (m_IsDestroyed) return; // After clicking [Quit] on the menu bar
 
 		DrawEditorGUIWindowPropertyEditor();
 
