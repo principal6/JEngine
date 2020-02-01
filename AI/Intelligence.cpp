@@ -260,8 +260,8 @@ void CIntelligence::Execute()
 
 void CIntelligence::ConvertPatternsIntoBehaviors()
 {
-	static steady_clock Clockk{};
-	m_Now_ms = Clockk.now().time_since_epoch().count() / 1'000'000;
+	static steady_clock Clock{};
+	m_Now_ms = Clock.now().time_since_epoch().count() / 1'000'000;
 
 	for (auto& Datum : m_vInternalPatternData)
 	{
