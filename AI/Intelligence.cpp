@@ -6,6 +6,8 @@
 #include "../Physics/PhysicsEngine.h"
 #include <chrono>
 
+using std::stod;
+using std::stof;
 using std::swap;
 using std::string;
 using std::to_string;
@@ -261,106 +263,102 @@ void CIntelligence::Execute()
 void CIntelligence::ConvertPatternsIntoBehaviors()
 {
 	static steady_clock Clock{};
-	m_Now_ms = Clock.now().time_since_epoch().count() / 1'000'000;
+	m_Now_ms = Clock.now().time_since_epoch().count() / 1'000'000; // current tick in milliseconds
 
-	for (auto& Datum : m_vInternalPatternData)
+	for (CIntelligence::SInternalPatternData& Datum : m_vInternalPatternData)
 	{
-		bool bIsInstructionDone{ true };
-		
-		if (Datum.PatternState.InstructionEndTime == 0) Datum.PatternState.InstructionEndTime = m_Now_ms; // @important: time initialization
+		// @important: initialize InstructionEndTime
+		if (Datum.PatternState.InstructionEndTime == 0) Datum.PatternState.InstructionEndTime = m_Now_ms;
 
-		auto ResultNode{ Datum.Pattern->Execute(Datum.PatternState) };
-		if (ResultNode->Identifier == "Wait") // @important
+		const SSyntaxTreeNode* const Command{ Datum.Pattern->Execute(Datum.PatternState) };
+
+		// "Wait" command doesn't get converted into a behavior,
+		// but just skips processing behaviors until the elapsed time reaches the duration of "Wait" command
+		if (Command->Identifier == "Wait")
 		{
-			float Duration_s{ stof(ResultNode->vChildNodes[0]->Identifier) };
-			long long Duration_ms{ static_cast<long long>(Duration_s * 1000.0) };
-			if (m_Now_ms - Datum.PatternState.InstructionEndTime < Duration_ms)
-			{
-				--Datum.PatternState.InstructionIndex;
-				bIsInstructionDone = false;
-			}
-
+			// If the object doesn't have any behavior, make it idle.
 			if (!HasBehavior(Datum.ObjectIdentifier))
 			{
-				const auto& LinearVelocity{ Datum.ObjectIdentifier.Object3D->GetPhysics(Datum.ObjectIdentifier).LinearVelocity };
+				const XMVECTOR& LinearVelocity{ Datum.ObjectIdentifier.Object3D->GetPhysics(Datum.ObjectIdentifier).LinearVelocity };
 				Datum.ObjectIdentifier.Object3D->SetLinearVelocity(Datum.ObjectIdentifier, XMVectorSet(0, XMVectorGetY(LinearVelocity), 0, 0));
 
 				Datum.ObjectIdentifier.Object3D->SetAnimation(Datum.ObjectIdentifier, EAnimationRegistrationType::Idle, EAnimationOption::Repeat,
 					!Datum.ObjectIdentifier.Object3D->IsCurrentAnimationRegisteredAs(Datum.ObjectIdentifier, EAnimationRegistrationType::Idle));
 			}
+
+			double Duration_s{ stod(Command->vChildNodes[0]->Identifier) };
+			long long Duration_ms{ static_cast<long long>(Duration_s * 1000.0) };
+			if (m_Now_ms - Datum.PatternState.InstructionEndTime < Duration_ms)
+			{
+				--Datum.PatternState.InstructionIndex;
+				continue; // @important: skip this iteration without altering InstructionEndTime
+			}
 		}
-		else if (ResultNode->Identifier == "Walk")
+		else if (Command->Identifier == "Walk")
 		{
 			if (HasBehavior(Datum.ObjectIdentifier) && PeekFrontBehavior(Datum.ObjectIdentifier).eBehaviorType == EBehaviorType::WalkTo)
 			{
-				
+				continue;
 			}
-			else
-			{
-				float Duration_s{ stof(ResultNode->vChildNodes[0]->Identifier) };
-				float TotalSpeed{ Datum.PatternState.WalkSpeed * Duration_s };
+			
+			float Duration_s{ stof(Command->vChildNodes[0]->Identifier) };
+			float TotalSpeed{ Datum.PatternState.WalkSpeed * Duration_s };
 
-				float Yaw{ Datum.ObjectIdentifier.Object3D->GetTransform(Datum.ObjectIdentifier).Yaw };
-				XMMATRIX RotationY{ XMMatrixRotationY(Yaw) };
-				XMVECTOR Forward{ XMVector3TransformNormal(KNegativeZAxis, RotationY) };
+			float Yaw{ Datum.ObjectIdentifier.Object3D->GetTransform(Datum.ObjectIdentifier).Yaw };
+			XMMATRIX RotationY{ XMMatrixRotationY(Yaw) };
+			XMVECTOR Forward{ XMVector3TransformNormal(KNegativeZAxis, RotationY) };
 
-				const auto& Translation{ Datum.ObjectIdentifier.Object3D->GetTransform(Datum.ObjectIdentifier).Translation };
-				XMVECTOR DestVector{ Forward * TotalSpeed + Translation };
+			const auto& Translation{ Datum.ObjectIdentifier.Object3D->GetTransform(Datum.ObjectIdentifier).Translation };
+			XMVECTOR DestVector{ Forward * TotalSpeed + Translation };
 
-				if (!XMVector3Equal(Translation, DestVector))
-				{
-					ClearBehavior(Datum.ObjectIdentifier);
+			ClearBehavior(Datum.ObjectIdentifier);
 
-					SBehaviorData Behavior{};
-					Behavior.eBehaviorType = EBehaviorType::WalkTo;
-					Behavior.Vector = DestVector;
-					Behavior.PrevTranslation = Translation;
-					Behavior.StartTime_ms = m_Now_ms;
-					Behavior.Scalar = Datum.PatternState.WalkSpeed; // speed
+			SBehaviorData Behavior{};
+			Behavior.eBehaviorType = EBehaviorType::WalkTo;
+			Behavior.Vector = DestVector;
+			Behavior.PrevTranslation = Translation;
+			Behavior.StartTime_ms = m_Now_ms;
+			Behavior.Scalar = Datum.PatternState.WalkSpeed; // speed
 
-					PushBackBehavior(Datum.ObjectIdentifier, Behavior);
-				}
-			}
+			PushBackBehavior(Datum.ObjectIdentifier, Behavior);
 		}
-		else if (ResultNode->Identifier == "WalkTo")
+		else if (Command->Identifier == "WalkTo")
 		{
-			XMVECTOR DestVector{ XMVectorSet(
-					stof(ResultNode->vChildNodes[0]->Identifier),
-					stof(ResultNode->vChildNodes[1]->Identifier),
-					stof(ResultNode->vChildNodes[2]->Identifier),
+			XMVECTOR DestVector{ 
+				XMVectorSet(
+					stof(Command->vChildNodes[0]->Identifier),
+					stof(Command->vChildNodes[1]->Identifier),
+					stof(Command->vChildNodes[2]->Identifier),
 					1) };
 
-			if (!XMVector3Equal(m_PhysicsEngine->GetPlayerObject()->GetTransform().Translation, DestVector))
-			{
-				ClearBehavior(Datum.ObjectIdentifier);
+			ClearBehavior(Datum.ObjectIdentifier);
 
-				SBehaviorData Behavior{};
-				Behavior.eBehaviorType = EBehaviorType::WalkTo;
-				Behavior.Vector = DestVector;
-				Behavior.StartTime_ms = m_Now_ms;
-				Behavior.Scalar = Datum.PatternState.WalkSpeed; // speed
+			SBehaviorData Behavior{};
+			Behavior.eBehaviorType = EBehaviorType::WalkTo;
+			Behavior.Vector = DestVector;
+			Behavior.StartTime_ms = m_Now_ms;
+			Behavior.Scalar = Datum.PatternState.WalkSpeed;
 
-				PushBackBehavior(Datum.ObjectIdentifier, Behavior);
-			}
+			PushBackBehavior(Datum.ObjectIdentifier, Behavior);
 		}
-		else if (ResultNode->Identifier == "RotateYaw")
+		// "RotateYaw" command doesn't get converted into a behavior. It is an instant change.
+		else if (Command->Identifier == "RotateYaw")
 		{
-			float DeltaYaw{ stof(ResultNode->vChildNodes[0]->Identifier) };
-			DeltaYaw = -DeltaYaw;
+			float DeltaYaw{ stof(Command->vChildNodes[0]->Identifier) };
 			Datum.ObjectIdentifier.Object3D->RotateYaw(Datum.ObjectIdentifier, DeltaYaw);
 		}
-		else if (ResultNode->Identifier == "RotateYawTo")
+		// "RotateYawTo" command doesn't get converted into a behavior. It is an instant change.
+		else if (Command->Identifier == "RotateYawTo")
 		{
-			XMVECTOR DestVector{ XMVectorSet(
-					stof(ResultNode->vChildNodes[0]->Identifier),
-					stof(ResultNode->vChildNodes[1]->Identifier),
-					stof(ResultNode->vChildNodes[2]->Identifier),
+			XMVECTOR DestVector{ 
+				XMVectorSet(
+					stof(Command->vChildNodes[0]->Identifier),
+					stof(Command->vChildNodes[1]->Identifier),
+					stof(Command->vChildNodes[2]->Identifier),
 					1) };
 
-			const XMVECTOR& MyPosition{ Datum.ObjectIdentifier.Object3D->GetTransform(Datum.ObjectIdentifier).Translation };
-
-			XMVECTOR Direction{ XMVector3Normalize(DestVector - MyPosition) };
-			XMVECTOR DirectionXY{ XMVectorSetY(Direction, 0) };
+			const XMVECTOR& Translation{ Datum.ObjectIdentifier.Object3D->GetTransform(Datum.ObjectIdentifier).Translation };
+			XMVECTOR DirectionXY{ XMVectorSetY(XMVector3Normalize(DestVector - Translation), 0) };
 			float Dot{ XMVectorGetX(XMVector3Dot(DirectionXY, KNegativeZAxis)) };
 			float CrossY{ XMVectorGetY(XMVector3Cross(DirectionXY, KNegativeZAxis)) };
 			float Yaw{ acos(Dot) };
@@ -368,18 +366,18 @@ void CIntelligence::ConvertPatternsIntoBehaviors()
 
 			Datum.ObjectIdentifier.Object3D->RotateYawTo(Datum.ObjectIdentifier, Yaw);
 		}
-		else if (ResultNode->Identifier == "Attack")
+		else if (Command->Identifier == "Attack")
 		{
 			SBehaviorData Behavior{};
 			Behavior.eBehaviorType = EBehaviorType::Attack;
 			Behavior.StartTime_ms = m_Now_ms;
-			Behavior.Scalar = 0;
+			Behavior.Scalar = 0; // attack animation type id
 
 			if (!IsFrontBehavior(Datum.ObjectIdentifier, EBehaviorType::Attack))
 			{
 				ClearBehavior(Datum.ObjectIdentifier);
 
-				const auto& LinearVelocity{ Datum.ObjectIdentifier.Object3D->GetPhysics(Datum.ObjectIdentifier).LinearVelocity };
+				const XMVECTOR& LinearVelocity{ Datum.ObjectIdentifier.Object3D->GetPhysics(Datum.ObjectIdentifier).LinearVelocity };
 				Datum.ObjectIdentifier.Object3D->SetLinearVelocity(Datum.ObjectIdentifier, XMVectorSet(0, XMVectorGetY(LinearVelocity), 0, 0));
 
 				PushBackBehavior(Datum.ObjectIdentifier, Behavior);
@@ -391,7 +389,8 @@ void CIntelligence::ConvertPatternsIntoBehaviors()
 			}
 		}
 
-		if (bIsInstructionDone) Datum.PatternState.InstructionEndTime = m_Now_ms;
+		// Update instruction end time, if this iteration has not been 'continue'd.
+		Datum.PatternState.InstructionEndTime = m_Now_ms;
 	}
 }
 
