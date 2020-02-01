@@ -85,9 +85,10 @@ static SFrustumVertices CalculateViewFrustumVertices(const XMMATRIX& Projection,
 }
 
 static SShadowMapFrustum CalculateShadowMapFrustum(const XMMATRIX& Projection, const XMVECTOR& EyePosition, const XMVECTOR& ViewDirection,
-	const XMVECTOR& DirectionToLight, float ViewFrustumZNear, float ViewFrustumZFar)
+	const XMVECTOR& DirectionToLight, float ViewFrustumZNear, float ViewFrustumZFar, float ZStepBack)
 {
-	SFrustumVertices ViewFrustumVertices{ CalculateViewFrustumVertices(Projection, EyePosition, ViewDirection, DirectionToLight, ViewFrustumZNear, ViewFrustumZFar) };
+	SFrustumVertices ViewFrustumVertices{ 
+		CalculateViewFrustumVertices(Projection, EyePosition, ViewDirection, DirectionToLight, ViewFrustumZNear, ViewFrustumZFar) };
 
 	SShadowMapFrustum ShadowMapFrustum{};
 	ShadowMapFrustum.LightForward = -DirectionToLight;
@@ -155,14 +156,13 @@ static SShadowMapFrustum CalculateShadowMapFrustum(const XMMATRIX& Projection, c
 
 	ShadowMapFrustum.HalfSize.x = (XMax - XMin) * 0.5f;
 	ShadowMapFrustum.HalfSize.y = (YMax - YMin) * 0.5f;
-	ShadowMapFrustum.HalfSize.z = (ZMax - ZMin) * 0.5f;
-	ShadowMapFrustum.HalfSize.z *= 1.5f; // @important: in order NOT to clip the shadows close to the viewer
+	ShadowMapFrustum.HalfSize.z = (ZMax + ZStepBack) * 0.5f; // @important: in order NOT to clip the shadows close to the viewer
 
 	ShadowMapFrustum.LightPosition = EyePosition +
 		(XMax - ShadowMapFrustum.HalfSize.x) * ShadowMapFrustum.LightRight +
 		(YMax - ShadowMapFrustum.HalfSize.y) * ShadowMapFrustum.LightUp +
-		(ZMax - ShadowMapFrustum.HalfSize.z * 2.0f) * ShadowMapFrustum.LightForward;
-	
+		-ZStepBack * ShadowMapFrustum.LightForward; // @important: in order NOT to clip the shadows close to the viewer
+
 	return ShadowMapFrustum;
 }
 

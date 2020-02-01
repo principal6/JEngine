@@ -137,7 +137,7 @@ void CGame::InitializeGameData()
 		};
 
 		m_CascadedShadowMap = make_unique<CCascadedShadowMap>(m_Device.Get(), m_DeviceContext.Get());
-		m_CascadedShadowMap->Create(vLODData, XMFLOAT2(1024, 1024));
+		m_CascadedShadowMap->Create(vLODData, XMFLOAT2(1024, 1024), 10.0f);
 	}
 
 	if (!m_DirectionalLightFSQ)

@@ -55,7 +55,7 @@ public:
 	~CCascadedShadowMap();
 
 public:
-	void Create(const std::vector<SLODData>& vLODData, const XMFLOAT2& MapSize);
+	void Create(const std::vector<SLODData>& vLODData, const XMFLOAT2& MapSize, float ZStepBack = KZStepBackDefault);
 
 public:
 	void SetZFar(size_t LOD, float ZFar);
@@ -81,6 +81,9 @@ public:
 	const SFrustumVertices& GetShadowMapFrustumVertices(size_t LOD) const;
 
 private:
+	static constexpr float			KZStepBackDefault{ 5.0f };
+
+private:
 	ID3D11Device* const				m_PtrDevice{};
 	ID3D11DeviceContext* const		m_PtrDeviceContext{};
 
@@ -90,6 +93,7 @@ private:
 	std::vector<SFrustumVertices>	m_vShadowMapFrustumVertices{};
 	std::vector<SFrustumVertices>	m_vViewFrustumVertices{};
 	std::vector<SLODData>			m_vLODData{};
+	float							m_ZStepBack{};
 
 private:
 	std::vector<std::unique_ptr<CObject3DLine>>	m_vViewFrustumReps{};

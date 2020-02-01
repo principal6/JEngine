@@ -16,8 +16,9 @@ CCascadedShadowMap::~CCascadedShadowMap()
 {
 }
 
-void CCascadedShadowMap::Create(const std::vector<SLODData>& vLODData, const XMFLOAT2& MapSize)
+void CCascadedShadowMap::Create(const std::vector<SLODData>& vLODData, const XMFLOAT2& MapSize, float ZStepBack)
 {
+	m_ZStepBack = ZStepBack;
 	m_vLODData = vLODData;
 	size_t LODCount{ m_vLODData.size() };
 
@@ -122,7 +123,7 @@ void CCascadedShadowMap::Set(size_t LOD, const XMMATRIX& Projection, const XMVEC
 	m_PtrDeviceContext->OMSetRenderTargets(0, nullptr, m_vShadowMaps[LOD].DSV.Get());
 	m_PtrDeviceContext->ClearDepthStencilView(m_vShadowMaps[LOD].DSV.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	m_vShadowMapFrustums[LOD] = CalculateShadowMapFrustum(Projection, EyePosition, ViewDirection, DirectionToLight, ZNear, ZFar);
+	m_vShadowMapFrustums[LOD] = CalculateShadowMapFrustum(Projection, EyePosition, ViewDirection, DirectionToLight, ZNear, ZFar, m_ZStepBack);
 	m_vShadowMapFrustumVertices[LOD] = CalculateShadowMapFrustumVertices(DirectionToLight, m_vShadowMapFrustums[LOD]);
 	m_vViewFrustumVertices[LOD] = CalculateViewFrustumVertices(Projection, EyePosition, ViewDirection, DirectionToLight, ZNear, ZFar);
 
