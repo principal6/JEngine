@@ -2,9 +2,9 @@
 
 #include <cstdint>
 
-union UUTF8
+union UUTF8_ID
 {
-	uint32_t	UInt32{};
+	uint32_t	ID{};
 	char		Chars[4];
 };
 

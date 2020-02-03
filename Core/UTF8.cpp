@@ -5,9 +5,9 @@
 
 uint32_t ConvertToUTF8(wchar_t Char)
 {
-	UUTF8 Result{};
+	UUTF8_ID Result{};
 	WideCharToMultiByte(CP_UTF8, 0, &Char, 1, Result.Chars, 4, nullptr, nullptr);
-	return Result.UInt32;
+	return Result.ID;
 }
 
 uint32_t GetUTF8CharacterByteCount(char FirstCharacter)

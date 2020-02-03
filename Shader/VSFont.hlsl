@@ -13,8 +13,10 @@ VS_OUTPUT main(VS_INPUT Input)
 	Input.Position.x += g_Position.x;
 	Input.Position.y -= g_Position.y;
 	Input.Position.w = 1;
+
 	Output.Position = mul(Input.Position, g_Projection);
 	Output.TexCoord = Input.TexCoord;
+	Output.Color = Input.Color;
 
 	return Output;
 }
