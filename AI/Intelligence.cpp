@@ -262,9 +262,9 @@ void CIntelligence::Execute()
 
 void CIntelligence::ConvertPatternsIntoBehaviors()
 {
-	static steady_clock Clock{};
+	static const steady_clock Clock{};
 	m_Now_ms = Clock.now().time_since_epoch().count() / 1'000'000; // current tick in milliseconds
-
+	
 	for (CIntelligence::SInternalPatternData& Datum : m_vInternalPatternData)
 	{
 		// @important: initialize InstructionEndTime
