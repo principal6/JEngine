@@ -161,6 +161,12 @@ void CGame::InitializeGameData()
 
 void CGame::InitializeEditorAssets()
 {
+	if (!m_BMFRIdentifier)
+	{
+		m_BMFRIdentifier = make_unique<CBMFontRenderer>(m_Device.Get(), m_DeviceContext.Get());
+		m_BMFRIdentifier->Create("Asset\\D2Coding_16px.fnt", m_WindowSize);
+	}	
+
 	if (!m_Gizmo3D)
 	{
 		m_Gizmo3D = make_unique<CGizmo3D>(m_Device.Get(), m_DeviceContext.Get());
@@ -2601,6 +2607,12 @@ CBMFontRenderer* CGame::GetBMFontRenderer(const std::string& BMFontRendererName)
 	return nullptr;
 }
 
+void CGame::ClearBMFontRenderers()
+{
+	m_umapBMFontRendererNameToIndex.clear();
+	m_vBMFontRenderers.clear();
+}
+
 bool CGame::SetMode(EMode eMode)
 {
 	if (eMode != EMode::Edit)
@@ -4703,6 +4715,73 @@ void CGame::DrawMultipleSelectionRep()
 	m_MultipleSelectionRep->Draw();
 }
 
+void CGame::DrawIdentifiers()
+{
+	static XMFLOAT4 ColorPlayer{ 0, 0.25f, 0.75f, 1 };
+	//static XMFLOAT4 ColorEnvironment{ 0, 1, 0, 1 };
+	static XMFLOAT4 ColorMonster{ 1, 0, 0, 1 };
+	static XMFLOAT4 ColorNone{ 1, 1, 1, 1 };
+
+	m_BMFRIdentifier->ClearRegistered();
+
+	for (const auto& Object3DPair : GetObject3DMap())
+	{
+		CObject3D* const Obejct3D{ GetObject3D(Object3DPair.first) };
+		EObjectRole eObjectRole{ m_PhysicsEngine.GetObjectRole(Obejct3D) };
+		XMFLOAT4 Color{ ColorNone };
+		switch (eObjectRole)
+		{
+		case EObjectRole::Player:
+			Color = ColorPlayer;
+			break;
+		case EObjectRole::Environment:
+			//Color = ColorEnvironment;
+			//break;
+			continue;
+		case EObjectRole::Monster:
+			Color = ColorMonster;
+		default:
+			break;
+		}
+
+		if (Obejct3D->IsInstanced())
+		{
+			for (const auto& Instance : Obejct3D->GetInstanceCPUDataVector())
+			{
+				XMVECTOR NDCPosition{ GetObject3DNDCPosition(SObjectIdentifier(Obejct3D, Instance.Name)) };
+				if (XMVectorGetX(NDCPosition) < -1.0f || XMVectorGetX(NDCPosition) > +1.0f) continue;
+				if (XMVectorGetY(NDCPosition) < -1.0f || XMVectorGetY(NDCPosition) > +1.0f) continue;
+				if (XMVectorGetZ(NDCPosition) < 0 || XMVectorGetZ(NDCPosition) > +1.0f) continue;
+
+				XMFLOAT2 ScreenPosition{ GetScreenPixelPositionFromNDCPosition(NDCPosition) };
+				m_BMFRIdentifier->RegisterString(Obejct3D->GetName().c_str(), ScreenPosition, Color);
+
+				XMFLOAT2 _P{ ScreenPosition };
+				_P.y += 16;
+
+				XMFLOAT4 _C{ Color };
+				_C.x += 0.25f;
+				_C.y += 0.25f;
+				_C.z += 0.25f;
+
+				m_BMFRIdentifier->RegisterString(Instance.Name.c_str(), _P, _C);
+			}
+		}
+		else
+		{
+			XMVECTOR NDCPosition{ GetObject3DNDCPosition(Obejct3D) };
+			if (XMVectorGetX(NDCPosition) < -1.0f || XMVectorGetX(NDCPosition) > +1.0f) continue;
+			if (XMVectorGetY(NDCPosition) < -1.0f || XMVectorGetY(NDCPosition) > +1.0f) continue;
+			if (XMVectorGetZ(NDCPosition) < 0 || XMVectorGetZ(NDCPosition) > +1.0f) continue;
+
+			XMFLOAT2 ScreenPosition{ GetScreenPixelPositionFromNDCPosition(NDCPosition) };
+			m_BMFRIdentifier->RegisterString(Obejct3D->GetName().c_str(), ScreenPosition, Color);
+		}
+	}
+
+	m_BMFRIdentifier->RenderRegistered();
+}
+
 void CGame::DrawEditorGUI()
 {
 	ImGui_ImplDX11_NewFrame();
@@ -5672,6 +5751,11 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 										break;
 									}
 
+									if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::None)))
+									{
+										m_PhysicsEngine.DeregisterObject(Object3D);
+									}
+									ImGui::SameLine();
 									if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::Player)))
 									{
 										m_PhysicsEngine.RegisterObject(Object3D, EObjectRole::Player);
@@ -7478,6 +7562,15 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 							ToggleRenderingFlag(EFlagsRendering::DrawTerrainFoliagePlacingTexture);
 						}
 
+						ImGui::AlignTextToFramePadding();
+						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DrawIdentifiers));
+						ImGui::SameLine(ItemsOffsetX);
+						bool bDrawIdentifiers{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::DrawIdentifiers) };
+						if (ImGui::Checkbox(u8"##아이디 표시", &bDrawIdentifiers))
+						{
+							ToggleRenderingFlag(EFlagsRendering::DrawIdentifiers);
+						}
+
 						ImGui::Separator();
 						ImGui::Separator();
 
@@ -8326,6 +8419,31 @@ void CGame::GenerateIntegratedBRDFMap()
 	SetForwardRenderTargets();
 }
 
+XMVECTOR CGame::GetObject3DNDCPosition(const SObjectIdentifier& Identifier) const
+{
+	const XMMATRIX KViewProjection{ m_MatrixView * m_MatrixProjection };
+
+	const XMVECTOR& Translation{ Identifier.Object3D->GetTransform(Identifier).Translation };
+	const XMVECTOR& OuterBoundingSphereCenter{ Identifier.Object3D->GetOuterBoundingSphere(Identifier).Center };
+	const XMVECTOR KOffsetTranslation{ Translation + OuterBoundingSphereCenter };
+
+	XMVECTOR ProjectionCenter{ XMVector3TransformCoord(KOffsetTranslation, KViewProjection) };
+	return ProjectionCenter;
+}
+
+XMFLOAT2 CGame::GetScreenPixelPositionFromNDCPosition(const XMVECTOR& NDCPosition) const
+{
+	XMFLOAT2 ProjectionXY{ XMVectorGetX(NDCPosition), XMVectorGetY(NDCPosition) };
+	ProjectionXY.x = (0.5f + ProjectionXY.x * 0.5f) * m_WindowSize.x;
+	ProjectionXY.y = (0.5f - ProjectionXY.y * 0.5f) * m_WindowSize.y;
+	return ProjectionXY;
+}
+
+const CPhysicsEngine* CGame::GetPhysicsEngine() const
+{
+	return &m_PhysicsEngine;
+}
+
 void CGame::EndRendering()
 {
 	if (m_IsDestroyed) return;
@@ -8388,6 +8506,11 @@ void CGame::EndRendering()
 			{
 				Draw3DGizmos();
 			}
+		}
+
+		if (EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::DrawIdentifiers))
+		{
+			DrawIdentifiers();
 		}
 
 		DrawEditorGUI();

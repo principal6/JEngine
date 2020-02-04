@@ -193,7 +193,8 @@ public:
 		UseLighting = 0x0800,
 		UsePhysicallyBasedRendering = 0x1000,
 		DrawLightVolumes = 0x2000,
-		DrawDirectionalLightShadowMap = 0x4000
+		DrawDirectionalLightShadowMap = 0x4000,
+		DrawIdentifiers = 0x8000,
 	};
 
 	enum class ERasterizerState
@@ -523,6 +524,7 @@ public:
 public:
 	bool InsertBMFontRenederer(const std::string& BMFontRendererName, const std::string& FNT_FileName);
 	CBMFontRenderer* GetBMFontRenderer(const std::string& BMFontRendererName);
+	void ClearBMFontRenderers();
 
 public:
 	bool SetMode(EMode eMode);
@@ -623,6 +625,8 @@ private:
 	void DrawLightRep();
 	void DrawMultipleSelectionRep();
 
+	void DrawIdentifiers();
+
 	void DrawEditorGUI();
 	void DrawEditorGUIMenuBar();
 	void DrawEditorGUIPopupTerrainGenerator();
@@ -642,6 +646,11 @@ private:
 	void GenerateIrradianceMap(float RangeFactor);
 	void GeneratePrefilteredRadianceMap(float RangeFactor);
 	void GenerateIntegratedBRDFMap();
+
+public:
+	XMVECTOR GetObject3DNDCPosition(const SObjectIdentifier& Identifier) const;
+	XMFLOAT2 GetScreenPixelPositionFromNDCPosition(const XMVECTOR& NDCPosition) const;
+	const CPhysicsEngine* GetPhysicsEngine() const;
 
 public:
 	static constexpr float KTranslationMinLimit{ -1000.0f };
@@ -849,6 +858,7 @@ private:
 private:
 	std::vector<std::unique_ptr<CBMFontRenderer>>	m_vBMFontRenderers{};
 	std::unordered_map<std::string, size_t>			m_umapBMFontRendererNameToIndex{};
+	std::unique_ptr<CBMFontRenderer>				m_BMFRIdentifier{};
 
 // Scene testing
 private:

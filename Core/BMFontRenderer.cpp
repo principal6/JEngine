@@ -23,11 +23,12 @@ CBMFontRenderer::~CBMFontRenderer()
 
 void CBMFontRenderer::Create(const std::string& FNT_FileName, const DirectX::XMFLOAT2& WindowSize)
 {
+	ReleaseResources();
+
 	m_bHasOwnData = true; // @important
 
 	// These variables needs to be updated every time
 	{
-		SAFE_DELETE(m_BMFont);
 		m_BMFont = new CBMFont();
 		m_BMFont->Load(FNT_FileName);
 
@@ -35,7 +36,6 @@ void CBMFontRenderer::Create(const std::string& FNT_FileName, const DirectX::XMF
 		m_TextureSizeDenominator.x = 1.0f / static_cast<float>(FontData.Common.ScaleW);
 		m_TextureSizeDenominator.y = 1.0f / static_cast<float>(FontData.Common.ScaleH);
 
-		SAFE_DELETE(m_FontTexture);
 		m_FontTexture = new CTexture(m_PtrDevice, m_PtrDeviceContext);
 		m_FontTexture->CreateTextureFromFile(m_BMFont->GetData().vPages.front(), false);
 
@@ -45,32 +45,20 @@ void CBMFontRenderer::Create(const std::string& FNT_FileName, const DirectX::XMF
 
 	// These variables only needs to be created once
 	{
-		if (!m_VSFont)
-		{
-			m_VSFont = new CShader(m_PtrDevice, m_PtrDeviceContext);
-			m_VSFont->Create(EShaderType::VertexShader, CShader::EVersion::_4_0, true, L"Shader\\VSFont.hlsl", "main",
-				KInputLayout, ARRAYSIZE(KInputLayout));
-		}
+		m_VSFont = new CShader(m_PtrDevice, m_PtrDeviceContext);
+		m_VSFont->Create(EShaderType::VertexShader, CShader::EVersion::_4_0, true, L"Shader\\VSFont.hlsl", "main",
+			KInputLayout, ARRAYSIZE(KInputLayout));
 
-		if (!m_PSFont)
-		{
-			m_PSFont = new CShader(m_PtrDevice, m_PtrDeviceContext);
-			m_PSFont->Create(EShaderType::PixelShader, CShader::EVersion::_4_0, true, L"Shader\\PSFont.hlsl", "main");
-		}
+		m_PSFont = new CShader(m_PtrDevice, m_PtrDeviceContext);
+		m_PSFont->Create(EShaderType::PixelShader, CShader::EVersion::_4_0, true, L"Shader\\PSFont.hlsl", "main");
 
-		if (!m_CBSpace)
-		{
-			m_CBSpace = new CConstantBuffer(m_PtrDevice, m_PtrDeviceContext, &m_CBSpaceData, sizeof(m_CBSpaceData));
-			m_CBSpace->Create();
-		}
+		m_CBSpace = new CConstantBuffer(m_PtrDevice, m_PtrDeviceContext, &m_CBSpaceData, sizeof(m_CBSpaceData));
+		m_CBSpace->Create();
 
-		if (!m_CommonStates)
-		{
-			m_CommonStates = new CommonStates(m_PtrDevice);
-		}
+		m_CommonStates = new CommonStates(m_PtrDevice);
 	}
 
-	m_vGlyphs.resize(1);
+	m_vGlyphVertices.resize(1);
 	m_vGlyphIndices.resize(1);
 
 	CreateBuffers();
@@ -98,7 +86,7 @@ void CBMFontRenderer::Create(const CBMFontRenderer* const FontRenderer)
 	m_CBSpace = FontRenderer->m_CBSpace;
 	m_CommonStates = FontRenderer->m_CommonStates;
 
-	m_vGlyphs.resize(1);
+	m_vGlyphVertices.resize(1);
 	m_vGlyphIndices.resize(1);
 
 	CreateBuffers();
@@ -117,8 +105,9 @@ void CBMFontRenderer::CreateBuffers()
 		BufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 
 		D3D11_SUBRESOURCE_DATA SubresourceData{};
-		SubresourceData.pSysMem = &m_vGlyphs[0];
+		SubresourceData.pSysMem = &m_vGlyphVertices[0];
 
+		m_VertexBuffer.Reset();
 		m_PtrDevice->CreateBuffer(&BufferDesc, &SubresourceData, m_VertexBuffer.ReleaseAndGetAddressOf());
 	}
 
@@ -135,25 +124,29 @@ void CBMFontRenderer::CreateBuffers()
 		D3D11_SUBRESOURCE_DATA SubresourceData{};
 		SubresourceData.pSysMem = &m_vGlyphIndices[0];
 
+		m_IndexBuffer.Reset();
 		m_PtrDevice->CreateBuffer(&BufferDesc, &SubresourceData, m_IndexBuffer.ReleaseAndGetAddressOf());
 	}
 }
 
 void CBMFontRenderer::UpdateBuffers()
 {
+	if (m_vGlyphVertices.empty()) return;
+	
+	size_t GlyphCount{ m_vGlyphVertices.size() / 4 };
 	D3D11_MAPPED_SUBRESOURCE MappedSubresource{};
 
 	// Vertex buffer
 	if (SUCCEEDED(m_PtrDeviceContext->Map(m_VertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedSubresource)))
 	{
-		memcpy(MappedSubresource.pData, &m_vGlyphs[0], sizeof(SVertex) * 4 * m_vGlyphs.size());
+		memcpy(MappedSubresource.pData, &m_vGlyphVertices[0], sizeof(SVertex) * 4 * GlyphCount);
 		m_PtrDeviceContext->Unmap(m_VertexBuffer.Get(), 0);
 	}
 
 	// Index buffer
 	if (SUCCEEDED(m_PtrDeviceContext->Map(m_IndexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedSubresource)))
 	{
-		memcpy(MappedSubresource.pData, &m_vGlyphIndices[0], sizeof(UINT) * 6 * m_vGlyphs.size());
+		memcpy(MappedSubresource.pData, &m_vGlyphIndices[0], sizeof(UINT) * 6 * GlyphCount);
 		m_PtrDeviceContext->Unmap(m_IndexBuffer.Get(), 0);
 	}
 }
@@ -181,45 +174,48 @@ void CBMFontRenderer::SetFontColor(const DirectX::XMFLOAT4& Color)
 	m_FontColor = Color;
 }
 
-CBMFontRenderer::SGlyph CBMFontRenderer::GetGlyph(size_t CharIndex, int32_t& CursorX, int32_t CursorY)
+void CBMFontRenderer::PushGlyph(size_t CharIndex, int32_t& CursorX, int32_t CursorY)
 {
 	const auto& FontData{ m_BMFont->GetData() };
 	const auto& Char{ FontData.vChars[CharIndex] };
 
-	CBMFontRenderer::SGlyph Glyph{};
+	float U0{ static_cast<float>(Char.X)* m_TextureSizeDenominator.x };
+	float V0{ static_cast<float>(Char.Y)* m_TextureSizeDenominator.y };
+	float U1{ U0 + static_cast<float>(Char.Width)* m_TextureSizeDenominator.x };
+	float V1{ V0 + static_cast<float>(Char.Height)* m_TextureSizeDenominator.y };
 
-	float U0{ static_cast<float>(Char.X) * m_TextureSizeDenominator.x };
-	float V0{ static_cast<float>(Char.Y) * m_TextureSizeDenominator.y };
-	float U1{ U0 + static_cast<float>(Char.Width) * m_TextureSizeDenominator.x };
-	float V1{ V0 + static_cast<float>(Char.Height) * m_TextureSizeDenominator.y };
+	SVertex Vertices[4]{};
 
-	Glyph.Vertices[0].Position.x = static_cast<float>(CursorX + Char.XOffset);
-	Glyph.Vertices[0].Position.y = static_cast<float>(CursorY - Char.YOffset);
-	Glyph.Vertices[0].TexCoord.x = U0;
-	Glyph.Vertices[0].TexCoord.y = V0;
-	Glyph.Vertices[0].Color = m_FontColor;
+	Vertices[0].Position.x = static_cast<float>(CursorX + Char.XOffset);
+	Vertices[0].Position.y = static_cast<float>(CursorY - Char.YOffset);
+	Vertices[0].TexCoord.x = U0;
+	Vertices[0].TexCoord.y = V0;
+	Vertices[0].Color = m_FontColor;
+	
+	Vertices[1].Position.x = Vertices[0].Position.x + static_cast<float>(Char.Width);
+	Vertices[1].Position.y = Vertices[0].Position.y;
+	Vertices[1].TexCoord.x = U1;
+	Vertices[1].TexCoord.y = V0;
+	Vertices[1].Color = m_FontColor;
 
-	Glyph.Vertices[1].Position.x = Glyph.Vertices[0].Position.x + static_cast<float>(Char.Width);
-	Glyph.Vertices[1].Position.y = Glyph.Vertices[0].Position.y;
-	Glyph.Vertices[1].TexCoord.x = U1;
-	Glyph.Vertices[1].TexCoord.y = V0;
-	Glyph.Vertices[1].Color = m_FontColor;
+	Vertices[2].Position.x = Vertices[0].Position.x;
+	Vertices[2].Position.y = Vertices[0].Position.y - static_cast<float>(Char.Height);
+	Vertices[2].TexCoord.x = U0;
+	Vertices[2].TexCoord.y = V1;
+	Vertices[2].Color = m_FontColor;
 
-	Glyph.Vertices[2].Position.x = Glyph.Vertices[0].Position.x;
-	Glyph.Vertices[2].Position.y = Glyph.Vertices[0].Position.y - static_cast<float>(Char.Height);
-	Glyph.Vertices[2].TexCoord.x = U0;
-	Glyph.Vertices[2].TexCoord.y = V1;
-	Glyph.Vertices[2].Color = m_FontColor;
+	Vertices[3].Position.x = Vertices[1].Position.x;
+	Vertices[3].Position.y = Vertices[2].Position.y;
+	Vertices[3].TexCoord.x = U1;
+	Vertices[3].TexCoord.y = V1;
+	Vertices[3].Color = m_FontColor;
 
-	Glyph.Vertices[3].Position.x = Glyph.Vertices[1].Position.x;
-	Glyph.Vertices[3].Position.y = Glyph.Vertices[2].Position.y;
-	Glyph.Vertices[3].TexCoord.x = U1;
-	Glyph.Vertices[3].TexCoord.y = V1;
-	Glyph.Vertices[3].Color = m_FontColor;
+	m_vGlyphVertices.emplace_back(Vertices[0]);
+	m_vGlyphVertices.emplace_back(Vertices[1]);
+	m_vGlyphVertices.emplace_back(Vertices[2]);
+	m_vGlyphVertices.emplace_back(Vertices[3]);
 
 	CursorX += Char.XAdvance; // @important
-
-	return Glyph;
 }
 
 void CBMFontRenderer::RenderMutableString(const char* UTF8String, const DirectX::XMFLOAT2& Position)
@@ -228,8 +224,8 @@ void CBMFontRenderer::RenderMutableString(const char* UTF8String, const DirectX:
 
 	size_t Length{ GetUTF8StringLength(UTF8String) };
 	const auto& CharIndexMap{ m_BMFont->GetCharIndexMap() };
-	m_vGlyphs.clear();
-	m_vGlyphs.reserve(Length * 4);
+	m_vGlyphVertices.clear();
+	m_vGlyphVertices.reserve(Length * 4);
 	m_vGlyphIndices.clear();
 	m_vGlyphIndices.reserve(Length * 6);
 
@@ -246,7 +242,7 @@ void CBMFontRenderer::RenderMutableString(const char* UTF8String, const DirectX:
 		memcpy(UTF8.Chars, &UTF8String[BufferAt], ByteCount);
 
 		size_t CharIndex{ (CharIndexMap.find(UTF8.ID) != CharIndexMap.end()) ? CharIndexMap.at(UTF8.ID) : 0 };
-		m_vGlyphs.emplace_back(GetGlyph(CharIndex, CursorX, CursorY));
+		PushGlyph(CharIndex, CursorX, CursorY);
 
 		UINT VertexBase{ GlyphIndex * 4 };
 		m_vGlyphIndices.emplace_back(VertexBase + 0);
@@ -260,21 +256,7 @@ void CBMFontRenderer::RenderMutableString(const char* UTF8String, const DirectX:
 		BufferAt += ByteCount;
 	}
 
-	bool bCapacityChanged{ false };
-	while (m_vGlyphs.size() > m_StringCapacity)
-	{
-		m_StringCapacity *= 2;
-		bCapacityChanged = true;
-	}
-
-	if (bCapacityChanged)
-	{
-		CreateBuffers();
-	}
-	else
-	{
-		UpdateBuffers();
-	}
+	UpdateStringCapacity();
 
 	m_CBSpaceData.Position.x = Position.x;
 	m_CBSpaceData.Position.y = Position.y;
@@ -292,8 +274,8 @@ void CBMFontRenderer::RenderConstantString(const char* UTF8String, const DirectX
 
 		size_t Length{ GetUTF8StringLength(m_PtrConstantUTF8String) };
 		const auto& CharIndexMap{ m_BMFont->GetCharIndexMap() };
-		m_vGlyphs.clear();
-		m_vGlyphs.reserve(Length * 4);
+		m_vGlyphVertices.clear();
+		m_vGlyphVertices.reserve(Length * 4);
 		m_vGlyphIndices.clear();
 		m_vGlyphIndices.reserve(Length * 6);
 
@@ -310,7 +292,7 @@ void CBMFontRenderer::RenderConstantString(const char* UTF8String, const DirectX
 			memcpy(UTF8.Chars, &m_PtrConstantUTF8String[BufferAt], ByteCount);
 
 			size_t CharIndex{ (CharIndexMap.find(UTF8.ID) != CharIndexMap.end()) ? CharIndexMap.at(UTF8.ID) : 0 };
-			m_vGlyphs.emplace_back(GetGlyph(CharIndex, CursorX, CursorY));
+			PushGlyph(CharIndex, CursorX, CursorY);
 
 			UINT VertexBase{ GlyphIndex * 4 };
 			m_vGlyphIndices.emplace_back(VertexBase + 0);
@@ -324,21 +306,7 @@ void CBMFontRenderer::RenderConstantString(const char* UTF8String, const DirectX
 			BufferAt += ByteCount;
 		}
 
-		bool bCapacityChanged{ false };
-		while (m_vGlyphs.size() > m_StringCapacity)
-		{
-			m_StringCapacity *= 2;
-			bCapacityChanged = true;
-		}
-
-		if (bCapacityChanged)
-		{
-			CreateBuffers();
-		}
-		else
-		{
-			UpdateBuffers();
-		}
+		UpdateStringCapacity();
 	}
 
 	m_CBSpaceData.Position.x = Position.x;
@@ -350,7 +318,7 @@ void CBMFontRenderer::RenderConstantString(const char* UTF8String, const DirectX
 
 void CBMFontRenderer::ClearRegistered()
 {
-	m_vGlyphs.clear();
+	m_vGlyphVertices.clear();
 	m_vGlyphIndices.clear();
 
 	m_CBSpaceData.Position.x = 0;
@@ -365,7 +333,8 @@ void CBMFontRenderer::RegisterString(const char* UTF8String, const DirectX::XMFL
 	m_FontColor = Color;
 
 	size_t Length{ GetUTF8StringLength(UTF8String) };
-	m_vGlyphs.reserve(m_vGlyphs.size() + Length * 4);
+	size_t GlyphCount{ m_vGlyphVertices.size() / 4 };
+	m_vGlyphVertices.reserve(m_vGlyphVertices.size() + Length * 4);
 	m_vGlyphIndices.reserve(m_vGlyphIndices.size() + Length * 6);
 
 	size_t BufferAt{};
@@ -375,7 +344,7 @@ void CBMFontRenderer::RegisterString(const char* UTF8String, const DirectX::XMFL
 	const auto& CharIndexMap{ m_BMFont->GetCharIndexMap() };
 	while (BufferAt < BufferSize)
 	{
-		UINT VertexBase{ static_cast<UINT>(m_vGlyphs.size() * 4) };
+		UINT VertexBase{ static_cast<UINT>(m_vGlyphVertices.size()) };
 		m_vGlyphIndices.emplace_back(VertexBase + 0);
 		m_vGlyphIndices.emplace_back(VertexBase + 1);
 		m_vGlyphIndices.emplace_back(VertexBase + 2);
@@ -389,27 +358,13 @@ void CBMFontRenderer::RegisterString(const char* UTF8String, const DirectX::XMFL
 		BufferAt += ByteCount;
 
 		size_t CharIndex{ (CharIndexMap.find(UTF8.ID) != CharIndexMap.end()) ? CharIndexMap.at(UTF8.ID) : 0 };
-		m_vGlyphs.emplace_back(GetGlyph(CharIndex, CursorX, CursorY));
+		PushGlyph(CharIndex, CursorX, CursorY);
 	}
 }
 
 void CBMFontRenderer::RenderRegistered()
 {
-	bool bCapacityChanged{ false };
-	while (m_vGlyphs.size() > m_StringCapacity)
-	{
-		m_StringCapacity *= 2;
-		bCapacityChanged = true;
-	}
-
-	if (bCapacityChanged)
-	{
-		CreateBuffers();
-	}
-	else
-	{
-		UpdateBuffers();
-	}
+	UpdateStringCapacity();
 
 	Render();
 
@@ -432,5 +387,30 @@ void CBMFontRenderer::Render()
 	m_PtrDeviceContext->IASetVertexBuffers(0, 1, m_VertexBuffer.GetAddressOf(), &m_VertexBufferStride, &m_VertexBufferOffset);
 	m_PtrDeviceContext->IASetIndexBuffer(m_IndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
-	m_PtrDeviceContext->DrawIndexed(static_cast<UINT>(m_vGlyphs.size() * 6), 0, 0);
+	m_PtrDeviceContext->DrawIndexed(static_cast<UINT>(m_vGlyphIndices.size()), 0, 0);
+}
+
+bool CBMFontRenderer::UpdateStringCapacity()
+{
+	bool bCapacityChanged{ false };
+	size_t GlyphCount{ (m_vGlyphVertices.size() / 4) };
+	while (GlyphCount > m_StringCapacity)
+	{
+		m_StringCapacity *= 2;
+		bCapacityChanged = true;
+	}
+	if (m_StringCapacity > KMaxStringCapacity)
+	{
+		m_StringCapacity = KMaxStringCapacity;
+	}
+
+	if (bCapacityChanged)
+	{
+		CreateBuffers();
+	}
+	else
+	{
+		UpdateBuffers();
+	}
+	return bCapacityChanged;
 }
