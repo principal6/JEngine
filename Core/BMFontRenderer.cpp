@@ -179,41 +179,20 @@ void CBMFontRenderer::PushGlyph(size_t CharIndex, int32_t& CursorX, int32_t Curs
 	const auto& FontData{ m_BMFont->GetData() };
 	const auto& Char{ FontData.vChars[CharIndex] };
 
-	float U0{ static_cast<float>(Char.X)* m_TextureSizeDenominator.x };
-	float V0{ static_cast<float>(Char.Y)* m_TextureSizeDenominator.y };
-	float U1{ U0 + static_cast<float>(Char.Width)* m_TextureSizeDenominator.x };
-	float V1{ V0 + static_cast<float>(Char.Height)* m_TextureSizeDenominator.y };
+	float X0{ static_cast<float>(CursorX + Char.XOffset) };
+	float Y0{ static_cast<float>(CursorY - Char.YOffset) };
+	float X1{ X0 + static_cast<float>(Char.Width) };
+	float Y1{ Y0 - static_cast<float>(Char.Height) };
 
-	SVertex Vertices[4]{};
+	float U0{ static_cast<float>(Char.X) * m_TextureSizeDenominator.x };
+	float V0{ static_cast<float>(Char.Y) * m_TextureSizeDenominator.y };
+	float U1{ U0 + static_cast<float>(Char.Width) * m_TextureSizeDenominator.x };
+	float V1{ V0 + static_cast<float>(Char.Height) * m_TextureSizeDenominator.y };
 
-	Vertices[0].Position.x = static_cast<float>(CursorX + Char.XOffset);
-	Vertices[0].Position.y = static_cast<float>(CursorY - Char.YOffset);
-	Vertices[0].TexCoord.x = U0;
-	Vertices[0].TexCoord.y = V0;
-	Vertices[0].Color = m_FontColor;
-	
-	Vertices[1].Position.x = Vertices[0].Position.x + static_cast<float>(Char.Width);
-	Vertices[1].Position.y = Vertices[0].Position.y;
-	Vertices[1].TexCoord.x = U1;
-	Vertices[1].TexCoord.y = V0;
-	Vertices[1].Color = m_FontColor;
-
-	Vertices[2].Position.x = Vertices[0].Position.x;
-	Vertices[2].Position.y = Vertices[0].Position.y - static_cast<float>(Char.Height);
-	Vertices[2].TexCoord.x = U0;
-	Vertices[2].TexCoord.y = V1;
-	Vertices[2].Color = m_FontColor;
-
-	Vertices[3].Position.x = Vertices[1].Position.x;
-	Vertices[3].Position.y = Vertices[2].Position.y;
-	Vertices[3].TexCoord.x = U1;
-	Vertices[3].TexCoord.y = V1;
-	Vertices[3].Color = m_FontColor;
-
-	m_vGlyphVertices.emplace_back(Vertices[0]);
-	m_vGlyphVertices.emplace_back(Vertices[1]);
-	m_vGlyphVertices.emplace_back(Vertices[2]);
-	m_vGlyphVertices.emplace_back(Vertices[3]);
+	m_vGlyphVertices.emplace_back(X0, Y0, U0, V0, m_FontColor);
+	m_vGlyphVertices.emplace_back(X1, Y0, U1, V0, m_FontColor);
+	m_vGlyphVertices.emplace_back(X0, Y1, U0, V1, m_FontColor);
+	m_vGlyphVertices.emplace_back(X1, Y1, U1, V1, m_FontColor);
 
 	CursorX += Char.XAdvance; // @important
 }
@@ -332,11 +311,6 @@ void CBMFontRenderer::RegisterString(const char* UTF8String, const DirectX::XMFL
 
 	m_FontColor = Color;
 
-	size_t Length{ GetUTF8StringLength(UTF8String) };
-	size_t GlyphCount{ m_vGlyphVertices.size() / 4 };
-	m_vGlyphVertices.reserve(m_vGlyphVertices.size() + Length * 4);
-	m_vGlyphIndices.reserve(m_vGlyphIndices.size() + Length * 6);
-
 	size_t BufferAt{};
 	size_t BufferSize{ strlen(UTF8String) };
 	int32_t CursorX{ static_cast<int32_t>(-m_WindowSize.x * 0.5f + Position.x) };
@@ -367,8 +341,6 @@ void CBMFontRenderer::RenderRegistered()
 	UpdateStringCapacity();
 
 	Render();
-
-	ClearRegistered();
 }
 
 void CBMFontRenderer::Render()

@@ -279,11 +279,15 @@ void CIntelligence::ConvertPatternsIntoBehaviors()
 			// If the object doesn't have any behavior, make it idle.
 			if (!HasBehavior(Datum.ObjectIdentifier))
 			{
-				const XMVECTOR& LinearVelocity{ Datum.ObjectIdentifier.Object3D->GetPhysics(Datum.ObjectIdentifier).LinearVelocity };
-				Datum.ObjectIdentifier.Object3D->SetLinearVelocity(Datum.ObjectIdentifier, XMVectorSet(0, XMVectorGetY(LinearVelocity), 0, 0));
+				const XMVECTOR& LinearVelocity{
+					Datum.ObjectIdentifier.Object3D->GetPhysics(Datum.ObjectIdentifier).LinearVelocity };
+				Datum.ObjectIdentifier.Object3D->SetLinearVelocity(
+					Datum.ObjectIdentifier, XMVectorSet(0, XMVectorGetY(LinearVelocity), 0, 0));
 
-				Datum.ObjectIdentifier.Object3D->SetAnimation(Datum.ObjectIdentifier, EAnimationRegistrationType::Idle, EAnimationOption::Repeat,
-					!Datum.ObjectIdentifier.Object3D->IsCurrentAnimationRegisteredAs(Datum.ObjectIdentifier, EAnimationRegistrationType::Idle));
+				Datum.ObjectIdentifier.Object3D->SetAnimation(
+					Datum.ObjectIdentifier, EAnimationRegistrationType::Idle, EAnimationOption::Repeat,
+					!Datum.ObjectIdentifier.Object3D->IsCurrentAnimationRegisteredAs(
+						Datum.ObjectIdentifier, EAnimationRegistrationType::Idle));
 			}
 
 			double Duration_s{ stod(Command->vChildNodes[0]->Identifier) };
@@ -296,7 +300,8 @@ void CIntelligence::ConvertPatternsIntoBehaviors()
 		}
 		else if (Command->Identifier == "Walk")
 		{
-			if (HasBehavior(Datum.ObjectIdentifier) && PeekFrontBehavior(Datum.ObjectIdentifier).eBehaviorType == EBehaviorType::WalkTo)
+			if (HasBehavior(Datum.ObjectIdentifier) &&
+				PeekFrontBehavior(Datum.ObjectIdentifier).eBehaviorType == EBehaviorType::WalkTo)
 			{
 				continue;
 			}
@@ -308,7 +313,8 @@ void CIntelligence::ConvertPatternsIntoBehaviors()
 			XMMATRIX RotationY{ XMMatrixRotationY(Yaw) };
 			XMVECTOR Forward{ XMVector3TransformNormal(KNegativeZAxis, RotationY) };
 
-			const auto& Translation{ Datum.ObjectIdentifier.Object3D->GetTransform(Datum.ObjectIdentifier).Translation };
+			const auto& Translation{ 
+				Datum.ObjectIdentifier.Object3D->GetTransform(Datum.ObjectIdentifier).Translation };
 			XMVECTOR DestVector{ Forward * TotalSpeed + Translation };
 
 			ClearBehavior(Datum.ObjectIdentifier);
@@ -357,7 +363,8 @@ void CIntelligence::ConvertPatternsIntoBehaviors()
 					stof(Command->vChildNodes[2]->Identifier),
 					1) };
 
-			const XMVECTOR& Translation{ Datum.ObjectIdentifier.Object3D->GetTransform(Datum.ObjectIdentifier).Translation };
+			const XMVECTOR& Translation{ 
+				Datum.ObjectIdentifier.Object3D->GetTransform(Datum.ObjectIdentifier).Translation };
 			XMVECTOR DirectionXY{ XMVectorSetY(XMVector3Normalize(DestVector - Translation), 0) };
 			float Dot{ XMVectorGetX(XMVector3Dot(DirectionXY, KNegativeZAxis)) };
 			float CrossY{ XMVectorGetY(XMVector3Cross(DirectionXY, KNegativeZAxis)) };
@@ -377,8 +384,10 @@ void CIntelligence::ConvertPatternsIntoBehaviors()
 			{
 				ClearBehavior(Datum.ObjectIdentifier);
 
-				const XMVECTOR& LinearVelocity{ Datum.ObjectIdentifier.Object3D->GetPhysics(Datum.ObjectIdentifier).LinearVelocity };
-				Datum.ObjectIdentifier.Object3D->SetLinearVelocity(Datum.ObjectIdentifier, XMVectorSet(0, XMVectorGetY(LinearVelocity), 0, 0));
+				const XMVECTOR& LinearVelocity{ 
+					Datum.ObjectIdentifier.Object3D->GetPhysics(Datum.ObjectIdentifier).LinearVelocity };
+				Datum.ObjectIdentifier.Object3D->SetLinearVelocity(
+					Datum.ObjectIdentifier, XMVectorSet(0, XMVectorGetY(LinearVelocity), 0, 0));
 
 				PushBackBehavior(Datum.ObjectIdentifier, Behavior);
 			}

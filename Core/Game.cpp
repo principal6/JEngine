@@ -4717,10 +4717,10 @@ void CGame::DrawMultipleSelectionRep()
 
 void CGame::DrawIdentifiers()
 {
-	static XMFLOAT4 ColorPlayer{ 0, 0.25f, 0.75f, 1 };
-	//static XMFLOAT4 ColorEnvironment{ 0, 1, 0, 1 };
+	static XMFLOAT4 ColorPlayer{ 0.75f, 1, 0.75f, 1 };
+	static XMFLOAT4 ColorEnvironment{ 0, 1, 0, 1 };
 	static XMFLOAT4 ColorMonster{ 1, 0, 0, 1 };
-	static XMFLOAT4 ColorNone{ 1, 1, 1, 1 };
+	static XMFLOAT4 ColorNone{ 0.5f, 0.5f, 0.5f, 1 };
 
 	m_BMFRIdentifier->ClearRegistered();
 
@@ -4735,9 +4735,9 @@ void CGame::DrawIdentifiers()
 			Color = ColorPlayer;
 			break;
 		case EObjectRole::Environment:
+			continue;
 			//Color = ColorEnvironment;
 			//break;
-			continue;
 		case EObjectRole::Monster:
 			Color = ColorMonster;
 		default:

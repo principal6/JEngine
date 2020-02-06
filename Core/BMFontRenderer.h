@@ -12,6 +12,12 @@ class CBMFontRenderer
 public:
 	struct alignas(16) SVertex
 	{
+		SVertex() {};
+		SVertex(const XMFLOAT2& _Position, const XMFLOAT2& _TexCoord, const XMFLOAT4& _Color) :
+			Position{ _Position }, TexCoord{ _TexCoord }, Color{ _Color } {}
+		SVertex(float X, float Y, float U, float V, const XMFLOAT4& _Color) :
+			Position{ X, Y }, TexCoord{ U, V }, Color{ _Color } {}
+
 		XMFLOAT2	Position{};
 		XMFLOAT2	TexCoord{};
 		XMFLOAT4	Color{};

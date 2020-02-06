@@ -159,7 +159,7 @@ const SBMFontData& CBMFont::GetData() const
 	return m_FontFace;
 }
 
-const std::map<uint32_t, size_t>& CBMFont::GetCharIndexMap() const
+const std::unordered_map<uint32_t, size_t>& CBMFont::GetCharIndexMap() const
 {
 	return m_mapIDToCharsIndex;
 }

@@ -84,8 +84,8 @@ public:
 public:
 	void Load(const std::string& FNT_FileName);
 	const SBMFontData& GetData() const;
-	const std::map<uint32_t, size_t>& GetCharIndexMap() const;
+	const std::unordered_map<uint32_t, size_t>& GetCharIndexMap() const;
 private:
 	SBMFontData					m_FontFace{};
-	std::map<uint32_t, size_t>	m_mapIDToCharsIndex{};
+	std::unordered_map<uint32_t, size_t>	m_mapIDToCharsIndex{};
 };
