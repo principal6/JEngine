@@ -132,6 +132,7 @@
   <ItemGroup>
     <ClCompile Include="AI\Analyzer.cpp" />
     <ClCompile Include="AI\Intelligence.cpp" />
+    <ClCompile Include="AI\MonsterSpawner.cpp" />
     <ClCompile Include="AI\Pattern.cpp" />
     <ClCompile Include="AI\SyntaxTree.cpp" />
     <ClCompile Include="AI\Tokenizer.cpp" />
@@ -171,6 +172,7 @@
   <ItemGroup>
     <ClInclude Include="AI\Analyzer.h" />
     <ClInclude Include="AI\Intelligence.h" />
+    <ClInclude Include="AI\MonsterSpawner.h" />
     <ClInclude Include="AI\Pattern.h" />
     <ClInclude Include="AI\PatternTypes.h" />
     <ClInclude Include="AI\SyntaxTree.h" />

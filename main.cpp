@@ -23,7 +23,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	Game.CreateStaticSky(30.0f);
 
 	//Game.LoadScene("Scene\\mayan_dungeon.scene");
-
+	//Game.LoadScene("Scene\\ai_test.scene");
 	//Game.SetMode(CGame::EMode::Play);
 
 	// Main loop
@@ -45,7 +45,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		}
 		else
 		{
-			if (KeyDown == VK_SPACE) Game.JumpPlayer(5.0f);
+			//if (KeyDown == VK_SPACE) Game.JumpPlayer(5.0f);
 			if (KeyDown == VK_DELETE) Game.DeleteSelectedObjects();
 			if (GetKeyState(VK_CONTROL) && (KeyDown == 'c' || KeyDown == 'C')) Game.CopySelectedObject();
 			if (GetKeyState(VK_CONTROL) && (KeyDown == 'v' || KeyDown == 'V')) Game.PasteCopiedObject();

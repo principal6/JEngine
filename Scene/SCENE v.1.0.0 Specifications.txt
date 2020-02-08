@@ -1,0 +1,83 @@
+// #########################
+// << .SCENE FILE STRUCTURE >>
+// @@@ SYNTAX @@@
+//  - <@PrefString>: 4B(uint32_t)[String length] + ??(string)[Non-zero-terminated string]
+// #########################
+// 8B (string) Signature "KJW-SCEN"
+// 4B (in total) Version
+//  = 2B (uint16_t) Version major "0x0001"
+//  + 1B (uint8_t) Version minor "0x00"
+//  + 1B (uint8_t) Version sub-minor "0x00"
+// ##### Patterns #####
+// 4B (uint32_t) Pattern count
+// - ### per-Pattern ###
+// - <@PrefString> Pattern file name
+// ##### Terrain #####
+// <@PrefString> Terrain file name
+// ##### Object3Ds #####
+// 4B (uint32_t) Object3D count
+// - ### per-Object3D ###
+// - <@PrefString> OB3D file name
+// - 1B (bool) Is rigged
+// - 1B (uint8_t, enum) Object role
+// - 1B (bool) Is instanced
+// - - ### per-Instance ###
+// - - 1B (bool) Has pattern
+// - - <@PrefString> Pattern file name
+// ##### Monster spawners #####
+// 4B (uint32_t) Monster spawner count
+// - ### per-Monster-spawner ###
+// - <@PrefString> Spawner name
+// - 1B (uint8_t, enum) Spawning condition
+// - 4B (float) Spawning interval
+// - 4B (uint32_t) Spawning count max
+// - 12B (XMFLOAT3) Spawner size
+// - <@PrefString> Linked Object3D name
+// - <@PrefString> Linked Pattern file name
+// ##### Editor camera #####
+// 4B (uint32_t, enum) Camera type
+// 16B (XMVECTOR) Translation
+// 4B (float) Pitch
+// 4B (float) Yaw
+// 4B (float) Movement factor
+// ##### Cameras #####
+// 4B (uint32_t) Camera count
+// - ### per-Camera ###
+// - <@PrefString> Camera name
+// - 4B (uint32_t, enum) Camera type
+// - 16B (XMVECTOR) Translation
+// - 4B (float) Pitch
+// - 4B (float) Yaw
+// - 4B (float) Movement factor
+// - 4B (float) Zoom distance
+// - 1B (bool) Is player camera
+// ##### Lights #####
+// ### Point light => Spot light ###
+// 4B (uint32_t, enum) Light type
+// 4B (uint32_t) Light instance count
+// - ### per-Light-instance ###
+// - <@PrefString> Instance name
+// - 4B (uint32_t, enum) Light type
+// - 16B (XMVECTOR) Position
+// - 16B (XMVECTOR) Color
+// - 16B (XMVECTOR) Direction
+// - 4B (float) Range
+// - 4B (float) Theta
+// ##### Scene material #####
+// <@PrefString> Base color texture filename
+// <@PrefString> Normal texture filename
+// <@PrefString> Opacity texture filename
+// <@PrefString> Roughness texture filename
+// <@PrefString> Metalness texture filename
+// <@PrefString> Ambient occlusion texture filename
+// ##### Light probe (IBL) #####
+// <@PrefString> Environment texture filename
+// <@PrefString> Irradiance texture filename
+// <@PrefString> Prefiltered radiance texture filename
+// <@PrefString> Integrated BRDF texture filename
+// ##### Directional light & Ambient light #####
+// 16B (XMVECTOR) Directional light direction
+// 12B (XMFLOAT3) Directional light color
+// 12B (XMFLOAT3) Ambient light color
+// 4B (float) Ambient light intensity
+// 4B (float) Exposure

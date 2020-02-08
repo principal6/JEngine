@@ -1007,6 +1007,7 @@ void CGame::EmptyScene()
 	ClearObject3Ds();
 	ClearCameras();
 	ClearLights();
+	ClearMonsterSpanwers();
 
 	m_PhysicsEngine.ClearData();
 	m_Intelligence = make_unique<CIntelligence>(m_Device.Get(), m_DeviceContext.Get());
@@ -1041,6 +1042,15 @@ void CGame::LoadScene(const std::string& FileName, const std::string& SceneConte
 
 	CBinaryData SceneBinaryData{};
 	SceneBinaryData.LoadFromFile(FileName);
+
+	// 8B (string) Signature
+	SceneBinaryData.ReadSkip(8);
+
+	// 4B (in total) Version
+	uint16_t VersionMajor{ SceneBinaryData.ReadUint16() };
+	uint8_t VersionMinor{ SceneBinaryData.ReadUint8() };
+	uint8_t VersionSubminor{ SceneBinaryData.ReadUint8() };
+	uint32_t Version{ (uint32_t)(VersionSubminor | (VersionMinor << 8) | (VersionMajor << 16)) };
 
 	// Scene Intelligence (Patterns)
 	{
@@ -1106,6 +1116,26 @@ void CGame::LoadScene(const std::string& FileName, const std::string& SceneConte
 		}
 	}
 
+	// Monster spawner
+	{
+		size_t MonsterSpawnerCount{ SceneBinaryData.ReadUint32() };
+		for (size_t iMonsterSpawner = 0; iMonsterSpawner < MonsterSpawnerCount; ++iMonsterSpawner)
+		{
+			string Name{};
+			SceneBinaryData.ReadStringWithPrefixedLength(Name);
+
+			SMonsterSpawnerData Data{};
+			Data.eCondition = (ESpawningCondition)SceneBinaryData.ReadUint8();
+			SceneBinaryData.ReadFloat(Data.Interval);
+			Data.CountMax = (size_t)SceneBinaryData.ReadUint32();
+			SceneBinaryData.ReadXMFLOAT3(Data.Size);
+			SceneBinaryData.ReadStringWithPrefixedLength(Data.Object3DName);
+			SceneBinaryData.ReadStringWithPrefixedLength(Data.PatternFileName);
+
+			InsertMonsterSpawner(Name, Data);
+		}
+	}
+
 	// Editor camera
 	{
 		m_EditorCamera->SetType((CCamera::EType)SceneBinaryData.ReadUint32());
@@ -1150,9 +1180,9 @@ void CGame::LoadScene(const std::string& FileName, const std::string& SceneConte
 		{
 			uint32_t LightType{ SceneBinaryData.ReadUint32() };
 
-			uint32_t LightCount{ SceneBinaryData.ReadUint32() };
+			uint32_t LightInstanceCount{ SceneBinaryData.ReadUint32() };
 
-			for (uint32_t iLight = 0; iLight < LightCount; ++iLight)
+			for (uint32_t iLightInstance = 0; iLightInstance < LightInstanceCount; ++iLightInstance)
 			{
 				CLight::SInstanceCPUData InstanceCPUData{};
 				CLight::SInstanceGPUData InstanceGPUData{};
@@ -1237,10 +1267,23 @@ void CGame::LoadScene(const std::string& FileName, const std::string& SceneConte
 
 void CGame::SaveScene(const string& FileName, const std::string& SceneContentDirectory)
 {
+	static constexpr uint16_t KVersionMajor{ 0x0001 };
+	static constexpr uint8_t KVersionMinor{ 0x00 };
+	static constexpr uint8_t KVersionSubminor{ 0x00 };
+	uint32_t Version{ (uint32_t)(KVersionSubminor | (KVersionMinor << 8) | (KVersionMajor << 16)) };
+
 	std::filesystem::remove_all(SceneContentDirectory.c_str());
 	std::filesystem::create_directory(SceneContentDirectory.c_str());
 
 	CBinaryData SceneBinaryData{};
+
+	// 8B (string) Signature
+	SceneBinaryData.WriteString("KJW_SCEN", 8);
+
+	// 4B (in total) Version
+	SceneBinaryData.WriteUint16(KVersionMajor);
+	SceneBinaryData.WriteUint8(KVersionMinor);
+	SceneBinaryData.WriteUint8(KVersionSubminor);
 
 	// Scene Intelligence (Patterns)
 	{
@@ -1250,7 +1293,7 @@ void CGame::SaveScene(const string& FileName, const std::string& SceneContentDir
 			SceneBinaryData.WriteStringWithPrefixedLength(Pattern->GetFileName());
 		}
 	}
-	
+
 	// Terrain
 	{
 		if (m_Terrain)
@@ -1312,6 +1355,24 @@ void CGame::SaveScene(const string& FileName, const std::string& SceneContentDir
 		}
 	}
 
+	// Monster spawners
+	{
+		SceneBinaryData.WriteUint32((uint32_t)m_vMonsterSpawners.size());
+		for (const auto& MonsterSpawner : m_vMonsterSpawners)
+		{
+			const auto& Name{ MonsterSpawner->GetName() };
+			const auto& Data{ MonsterSpawner->GetData() };
+
+			SceneBinaryData.WriteStringWithPrefixedLength(Name);
+			SceneBinaryData.WriteUint8((uint8_t)Data.eCondition);
+			SceneBinaryData.WriteFloat(Data.Interval);
+			SceneBinaryData.WriteUint32((uint32_t)Data.CountMax);
+			SceneBinaryData.WriteXMFLOAT3(Data.Size);
+			SceneBinaryData.WriteStringWithPrefixedLength(Data.Object3DName);
+			SceneBinaryData.WriteStringWithPrefixedLength(Data.PatternFileName);
+		}
+	}
+
 	// Editor camera
 	{
 		SceneBinaryData.WriteUint32((uint32_t)m_EditorCamera->GetType());
@@ -1340,15 +1401,16 @@ void CGame::SaveScene(const string& FileName, const std::string& SceneContentDir
 
 	// LightArray
 	{
+		// m_LightArray[0] == PointLight, m_LightArray[1] == SpotLight
 		for (auto& Light : m_LightArray)
 		{
 			uint32_t LightType{ (uint32_t)Light->GetType() };
 			SceneBinaryData.WriteUint32(LightType);
 
-			uint32_t LightCount{ (uint32_t)Light->GetInstanceCount() };
-			SceneBinaryData.WriteUint32(LightCount);
+			uint32_t LightInstanceCount{ (uint32_t)Light->GetInstanceCount() };
+			SceneBinaryData.WriteUint32(LightInstanceCount);
 
-			if (LightCount)
+			if (LightInstanceCount)
 			{
 				for (const auto& LightPair : Light->GetInstanceNameToIndexMap())
 				{
@@ -1378,7 +1440,7 @@ void CGame::SaveScene(const string& FileName, const std::string& SceneContentDir
 		SceneBinaryData.WriteStringWithPrefixedLength(m_SceneMaterial->GetTextureFileName(ETextureType::AmbientOcclusionTexture));
 	}
 
-	// Light probe
+	// Light probe (IBL)
 	{
 		SceneBinaryData.WriteStringWithPrefixedLength(m_EnvironmentTexture->GetFileName());
 		SceneBinaryData.WriteStringWithPrefixedLength(m_IrradianceTexture->GetFileName());
@@ -2308,11 +2370,26 @@ CObject3D* CGame::GetObject3D(const string& Name, bool bShowWarning) const
 	return m_vObject3Ds[m_mapObject3DNameToIndex.at(Name)].get();
 }
 
-void CGame::DeleteObject3DInstance(CObject3D* Object3D, const std::string& Name)
+void CGame::DeleteObject3DInstance(CObject3D* const Object3D, const std::string& Name)
 {
+	if (!Object3D) return;
+
 	m_Intelligence->DeregisterPattern(SObjectIdentifier(Object3D, Name));
 
 	Object3D->DeleteInstance(Name);
+}
+
+void CGame::ClearObject3DInstances(CObject3D* const Object3D)
+{
+	if (!Object3D) return;
+	if (!Object3D->IsInstanced()) return;
+
+	for (auto& Instance : Object3D->GetInstanceCPUDataVector())
+	{
+		m_Intelligence->DeregisterPattern(SObjectIdentifier(Object3D, Instance.Name));
+	}
+
+	Object3D->ClearInstances();
 }
 
 bool CGame::InsertObject3DLine(const string& Name, bool bShowWarning)
@@ -2613,6 +2690,46 @@ void CGame::ClearBMFontRenderers()
 	m_vBMFontRenderers.clear();
 }
 
+bool CGame::InsertMonsterSpawner(const std::string& Name, const SMonsterSpawnerData& Data)
+{
+	if (m_mapMonsterSpawnerNameToIndex.find(Name) != m_mapMonsterSpawnerNameToIndex.end())
+	{
+		MB_WARN(GUI_STRING_MB(EGUIString_MB::NameCollision), GUI_STRING_MB(EGUIString_MB::MonsterSpawnerCreation));
+		return false;
+	}
+
+	m_vMonsterSpawners.emplace_back(make_unique<CMonsterSpawner>(Name, Data));
+	m_mapMonsterSpawnerNameToIndex[Name] = m_vMonsterSpawners.size() - 1;
+
+	const auto& Object3D{ GetObject3D(Data.Object3DName) };
+	ClearObject3DInstances(Object3D);
+		
+	return true;
+}
+
+void CGame::DeleteMonsterSpawner(const std::string& Name)
+{
+	string _Name{ Name };
+	if (m_mapMonsterSpawnerNameToIndex.find(_Name) != m_mapMonsterSpawnerNameToIndex.end())
+	{
+		size_t At{ m_mapMonsterSpawnerNameToIndex.at(_Name) };
+		if (At < m_vMonsterSpawners.size() - 1)
+		{
+			swap(m_mapMonsterSpawnerNameToIndex[m_vMonsterSpawners.back()->GetName()], m_mapMonsterSpawnerNameToIndex[_Name]);
+			swap(m_vMonsterSpawners[At], m_vMonsterSpawners.back());
+		}
+
+		m_vMonsterSpawners.pop_back();
+		m_mapMonsterSpawnerNameToIndex.erase(_Name);
+	}
+}
+
+void CGame::ClearMonsterSpanwers()
+{
+	m_vMonsterSpawners.clear();
+	m_mapMonsterSpawnerNameToIndex.clear();
+}
+
 bool CGame::SetMode(EMode eMode)
 {
 	if (eMode != EMode::Edit)
@@ -2658,6 +2775,15 @@ bool CGame::SetMode(EMode eMode)
 		UseCamera(GetPlayerCamera());
 
 		m_SavedRenderingFlags = GetRenderingFlags();
+	}
+
+	for (auto& MonsterSpawner : m_vMonsterSpawners)
+	{
+		const auto& Data{ MonsterSpawner->GetData() };
+		auto Object3D{ GetObject3D(Data.Object3DName) };
+		ClearObject3DInstances(Object3D);
+
+		MonsterSpawner->Reset();
 	}
 
 	m_eMode = eMode;
@@ -3875,23 +4001,49 @@ void CGame::Update()
 
 	m_TimePrev_ms = m_TimeNow_ms;
 	++m_FrameCounter;
-
-	// Intelligence
-	if (GetMode() != EMode::Edit)
-	{
-		m_Intelligence->Execute();
-	}
 	
-	// Physics engine
+	// In [Test] or [Play] mode
 	if (GetMode() != EMode::Edit)
 	{
-		CObject3D* const PlayerObject{ m_PhysicsEngine.GetPlayerObject() };
-		if (PlayerObject)
+		// Monster spawner
+		for (const auto& Spawner : m_vMonsterSpawners)
 		{
-			GetCurrentCamera()->TranslateTo(PlayerObject->GetTransform().Translation);
+			const auto& Data{ Spawner->GetData() };
+
+			const auto& Object3D{ GetObject3D(Data.Object3DName) };
+			const auto& Pattern{ GetPattern(Data.PatternFileName) };
+
+			if (!Spawner->IsInitialized())
+			{
+				ClearObject3DInstances(Object3D);
+			}
+
+			if (Spawner->Spawn())
+			{
+				float X{ GetRandom(-Data.Size.x * 0.5f, +Data.Size.x * 0.5f) };
+				float Y{ GetRandom(-Data.Size.y * 0.5f, +Data.Size.y * 0.5f) };
+				float Z{ GetRandom(-Data.Size.z * 0.5f, +Data.Size.z * 0.5f) };
+				XMVECTOR Offset{ X, Y, Z, 0 };
+
+				Object3D->InsertInstance();
+				Object3D->TranslateInstanceTo(Object3D->GetLastInstanceName(), Object3D->GetTransform().Translation + Offset);
+
+				m_Intelligence->RegisterPattern(SObjectIdentifier(Object3D, Object3D->GetLastInstanceName()), Pattern);
+			}
 		}
 
-		m_PhysicsEngine.Update(m_DeltaTime_s);
+		// Intelligence
+		m_Intelligence->Execute();
+
+		// Physics engine
+		{
+			CObject3D* const PlayerObject{ m_PhysicsEngine.GetPlayerObject() };
+			if (PlayerObject)
+			{
+				GetCurrentCamera()->TranslateTo(PlayerObject->GetTransform().Translation);
+			}
+			m_PhysicsEngine.Update(m_DeltaTime_s);
+		}
 	}
 }
 
@@ -4259,6 +4411,13 @@ void CGame::DrawOpaqueObject3Ds(bool bIgnoreOwnTexture, bool bUseVoidPS)
 			}
 
 			Object3D->Animate(m_DeltaTime_s);
+		}
+
+		// For MonsterSpawner,
+		// non-instanced monster objects are not drawn to the screen
+		if (m_PhysicsEngine.GetObjectRole(Object3D.get()) == EObjectRole::Monster)
+		{
+			if (!Object3D->IsInstanced()) continue;
 		}
 
 		Object3D->UpdateWorldMatrix();
@@ -5626,7 +5785,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									ImGui::SameLine(ItemsOffsetX);
 									XMVECTOR Translation{ InstanceTransform.Translation };
 									if (ImGui::DragFloat3(u8"##위치", Translation.m128_f32, KTranslationDelta,
-										KTranslationMinLimit, KTranslationMaxLimit, "%.2f"))
+										KTranslationMinLimit, KTranslationMaxLimit, "%.3f"))
 									{
 										Object3D->TranslateInstanceTo(SelectionData.Name, Translation);
 										Object3D->UpdateInstanceWorldMatrix(SelectionData.Name);
@@ -5681,7 +5840,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 										ImGui::SameLine(ItemsOffsetX);
 										XMVECTOR Translation{ Object3D->GetTransform().Translation };
 										if (ImGui::DragFloat3(u8"##위치", Translation.m128_f32, KTranslationDelta,
-											KTranslationMinLimit, KTranslationMaxLimit, "%.2f"))
+											KTranslationMinLimit, KTranslationMaxLimit, "%.3f"))
 										{
 											Object3D->TranslateTo(Translation);
 											Object3D->UpdateWorldMatrix();
@@ -7119,11 +7278,11 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									InsertPattern(FileDialog.GetRelativeFileName());
 								}
 							}
-							
-							ImGui::SameLine();
 
 							if (m_vPatterns.size())
 							{
+								ImGui::SameLine();
+
 								if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::Content))) 
 									ImGui::OpenPopup(GUI_STRING_CONTENT(EGUIString_Content::PatternFileViewer));
 							}
@@ -7166,6 +7325,245 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 								++iPattern;
 							}
 
+							ImGui::TreePop();
+						}
+
+
+						// 몬스터 스포너
+						ImGui::AlignTextToFramePadding();
+						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::MonsterSpawner));
+						if (ImGui::TreeNodeEx(GUI_STRING_CONTENT(EGUIString_Content::MonsterSpawnerList), ImGuiTreeNodeFlags_DefaultOpen))
+						{
+							static size_t iSelectedSpawner{};
+
+							if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::Insert))) ImGui::OpenPopup(u8"MonsterSpawner");
+
+							if (m_vMonsterSpawners.size())
+							{
+								ImGui::SameLine();
+
+								if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::Delete)))
+								{
+									DeleteMonsterSpawner(m_vMonsterSpawners[iSelectedSpawner]->GetName());
+								}
+							}
+							
+							if (ImGui::BeginPopupModal(u8"MonsterSpawner"))
+							{
+								static char Name[MAX_PATH]{};
+								static size_t iSelectedObject3D{};
+								static size_t iSelectedPattern{};
+								static constexpr float _ItemOffsetX{ 170 };
+
+								ImGui::AlignTextToFramePadding();
+								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::SpawnerName));
+								ImGui::SameLine(_ItemOffsetX);
+								ImGui::InputText(u8"##Name", Name, MAX_PATH);
+
+								ImGui::AlignTextToFramePadding();
+								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::ObjectToBeLinked));
+								if (m_vObject3Ds.size())
+								{
+									ImGui::SameLine(_ItemOffsetX);
+									ImGui::Text(m_vObject3Ds[iSelectedObject3D]->GetName().c_str());
+								}
+								if (ImGui::ListBoxHeader(u8"##Objects", ImVec2(320, 100)))
+								{
+									size_t iObject3D{};
+									for (const auto& Object3D : m_vObject3Ds)
+									{
+										if (ImGui::Selectable(Object3D->GetName().c_str(), (iSelectedObject3D == iObject3D)))
+										{
+											iSelectedObject3D = iObject3D;
+										}
+										++iObject3D;
+									}
+
+									ImGui::ListBoxFooter();
+								}
+
+								ImGui::AlignTextToFramePadding();
+								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::PatternToBeLinked));
+								if (m_vPatterns.size())
+								{
+									ImGui::SameLine(_ItemOffsetX);
+									ImGui::Text(m_vPatterns[iSelectedPattern]->GetFileName().c_str());
+								}
+								if (ImGui::ListBoxHeader(u8"##Patterns", ImVec2(320, 100)))
+								{
+									size_t iPattern{};
+									for (const auto& Pattern : m_vPatterns)
+									{
+										if (ImGui::Selectable(Pattern->GetFileName().c_str(), (iSelectedPattern == iPattern)))
+										{
+											iSelectedPattern = iPattern;
+										}
+										++iPattern;
+									}
+
+									ImGui::ListBoxFooter();
+								}
+
+								if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::Confirm)) || m_CapturedKeyboardState.Enter)
+								{
+									if (strlen(Name) == 0)
+									{
+										MB_WARN(GUI_STRING_MB(EGUIString_MB::NameCantBeNullString), GUI_STRING_MB(EGUIString_MB::CreationFailure));
+									}
+									else if (m_vPatterns.empty())
+									{
+										MB_WARN(GUI_STRING_MB(EGUIString_MB::NoPatternIsAvailable), GUI_STRING_MB(EGUIString_MB::CreationFailure));
+									}
+									else if (m_vObject3Ds.empty())
+									{
+										MB_WARN(GUI_STRING_MB(EGUIString_MB::NoObjectIsAvailable), GUI_STRING_MB(EGUIString_MB::CreationFailure));
+									}
+									else
+									{
+										SMonsterSpawnerData Data{};
+										Data.Object3DName = m_vObject3Ds[iSelectedObject3D]->GetName();
+										Data.PatternFileName = m_vPatterns[iSelectedPattern]->GetFileName();
+										
+										InsertMonsterSpawner(Name, Data);
+
+										// reset variables
+										iSelectedObject3D = 0;
+										iSelectedPattern = 0;
+
+										ImGui::CloseCurrentPopup();
+									}
+								}
+
+								ImGui::SameLine();
+
+								if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::Close)) || m_CapturedKeyboardState.Escape)
+								{
+									ImGui::CloseCurrentPopup();
+								}
+
+								ImGui::EndPopup();
+							}
+
+							if (ImGui::ListBoxHeader(u8"##MonsterSpawnerList", ImVec2(WindowWidth - 30, 80)))
+							{
+								size_t iSpawner{};
+								for (const auto& Spawner : m_vMonsterSpawners)
+								{
+									if (ImGui::Selectable(Spawner->GetName().c_str(), (iSelectedSpawner == iSpawner)))
+									{
+										iSelectedSpawner = iSpawner;
+									}
+									++iSpawner;
+								}
+								ImGui::ListBoxFooter();
+							}
+
+							if (m_vMonsterSpawners.size())
+							{
+								auto& SelectedMonsterSpawner{ m_vMonsterSpawners[iSelectedSpawner] };
+								const auto& KData{ SelectedMonsterSpawner->GetData() };
+								auto Object3D{ GetObject3D(KData.Object3DName) };
+
+								ImGui::AlignTextToFramePadding();
+								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::SelectedSpawner));
+								ImGui::SameLine(ItemsOffsetX);
+								ImGui::Text(SelectedMonsterSpawner->GetName().c_str());
+
+								ImGui::AlignTextToFramePadding();
+								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::LinkedObject));
+								ImGui::SameLine(ItemsOffsetX);
+								if (ImGui::Button(KData.Object3DName.c_str()))
+								{
+									SSelectionData SelectionData{ EObjectType::Object3D, KData.Object3DName, Object3D };
+									SelectObject(SelectionData);
+								}
+
+								ImGui::AlignTextToFramePadding();
+								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::LinkedPattern));
+								ImGui::SameLine(ItemsOffsetX);
+								ImGui::Text(KData.PatternFileName.c_str());
+
+								ImGui::AlignTextToFramePadding();
+								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::SpawnerCenter));
+								ImGui::SameLine(ItemsOffsetX);
+								XMVECTOR Translation{ Object3D->GetTransform().Translation };
+								if (ImGui::DragFloat3(u8"##Translation", Translation.m128_f32))
+								{
+									Object3D->TranslateTo(Translation);
+								}
+
+								ImGui::AlignTextToFramePadding();
+								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::SpawnerSize));
+								ImGui::SameLine(ItemsOffsetX);
+								XMFLOAT3 Size{ KData.Size };
+								if (ImGui::DragFloat3(u8"##Size", &Size.x))
+								{
+									auto CopiedData{ KData };
+									CopiedData.Size = Size;
+									SelectedMonsterSpawner->SetData(CopiedData);
+								}
+
+								static const char* KConditionStrings[]
+								{
+									GUI_STRING_CONTENT(EGUIString_Content::SpawnOnlyOnce),
+									GUI_STRING_CONTENT(EGUIString_Content::SpawnOnceInAWhile),
+									GUI_STRING_CONTENT(EGUIString_Content::SpawnNTimes),
+									GUI_STRING_CONTENT(EGUIString_Content::SpawnNMaintained),
+								};
+								size_t iSelectedCondition{ (size_t)KData.eCondition };
+								ESpawningCondition eSelectedCondition{ (ESpawningCondition)iSelectedCondition };
+								ImGui::AlignTextToFramePadding();
+								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::SpawningCondition));
+								ImGui::SameLine(ItemsOffsetX);
+								if (ImGui::BeginCombo(u8"##Condition", KConditionStrings[iSelectedCondition]))
+								{
+									size_t iCondition{};
+									for (const auto& ConditionString : KConditionStrings)
+									{
+										if (ImGui::Selectable(ConditionString, iSelectedCondition == iCondition))
+										{
+											iSelectedCondition = iCondition;
+
+											auto CopiedData{ KData };
+											CopiedData.eCondition = (ESpawningCondition)iSelectedCondition;
+											SelectedMonsterSpawner->SetData(CopiedData);
+										}
+										++iCondition;
+									}
+
+									ImGui::EndCombo();
+								}
+								if (eSelectedCondition == ESpawningCondition::OnceInAWhile
+									||
+									eSelectedCondition == ESpawningCondition::NTimes)
+								{
+									ImGui::AlignTextToFramePadding();
+									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::SpawningInterval_ms));
+									ImGui::SameLine(ItemsOffsetX);
+									float Interval{ KData.Interval };
+									if (ImGui::DragFloat(u8"##Interval", &Interval))
+									{
+										auto CopiedData{ KData };
+										CopiedData.Interval = Interval;
+										SelectedMonsterSpawner->SetData(CopiedData);
+									}
+
+									if (eSelectedCondition == ESpawningCondition::NTimes)
+									{
+										ImGui::AlignTextToFramePadding();
+										ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::SpawningMaxCount));
+										ImGui::SameLine(ItemsOffsetX);
+										int N{ (int)KData.CountMax };
+										if (ImGui::DragInt(u8"##N", &N, 1.0f, 0, KSpawningCountMaxLimit))
+										{
+											auto CopiedData{ KData };
+											CopiedData.CountMax = N;
+											SelectedMonsterSpawner->SetData(CopiedData);
+										}
+									}
+								}
+							}
+							
 							ImGui::TreePop();
 						}
 					}

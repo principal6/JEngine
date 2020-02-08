@@ -145,6 +145,9 @@
     <ClCompile Include="Core\BMFontRenderer.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="AI\MonsterSpawner.cpp">
+      <Filter>AI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirectXTK\Audio.h">
@@ -566,6 +569,9 @@
     </ClInclude>
     <ClInclude Include="Core\GUIConstants.h">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="AI\MonsterSpawner.h">
+      <Filter>AI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

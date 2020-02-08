@@ -199,8 +199,8 @@ void CIntelligence::RegisterPattern(const SObjectIdentifier& Identifier, CPatter
 		SInternalPatternData PatternInfo{};
 		PatternInfo.ObjectIdentifier = Identifier;
 		PatternInfo.Pattern = Pattern;
-		PatternInfo.PatternState.MyPosition = &Identifier.Object3D->GetTransform(Identifier).Translation;
-		PatternInfo.PatternState.EnemyPosition = &m_PhysicsEngine->GetPlayerObject()->GetTransform().Translation; // @important
+		PatternInfo.PatternState.Me = Identifier;
+		PatternInfo.PatternState.Enemy = SObjectIdentifier(m_PhysicsEngine->GetPlayerObject()); // @important
 		m_vInternalPatternData.emplace_back(PatternInfo);
 		
 		m_umapPatternInfos[IdentifierString] = m_vInternalPatternData.size() - 1;

@@ -2,6 +2,7 @@
 #include "Analyzer.h"
 #include "SyntaxTree.h"
 #include "Tokenizer.h"
+#include "../Model/Object3D.h"
 
 #include <fstream>
 #include <cmath>
@@ -534,31 +535,33 @@ float CPattern::GetVariableValue(const std::string& Identifier)
 
 	if (Identifier == "EnemyPosition.x")
 	{
-		return m_CopiedState.EnemyPosition->m128_f32[0];
+		return m_CopiedState.Enemy.Object3D->GetTransform(m_CopiedState.Enemy).Translation.m128_f32[0];
 	}
 	else if (Identifier == "EnemyPosition.y")
 	{
-		return m_CopiedState.EnemyPosition->m128_f32[1];
+		return m_CopiedState.Enemy.Object3D->GetTransform(m_CopiedState.Enemy).Translation.m128_f32[1];
 	}
 	else if (Identifier == "EnemyPosition.z")
 	{
-		return m_CopiedState.EnemyPosition->m128_f32[2];
+		return m_CopiedState.Enemy.Object3D->GetTransform(m_CopiedState.Enemy).Translation.m128_f32[2];
 	}
 	else if (Identifier == "MyPosition.x")
 	{
-		return m_CopiedState.MyPosition->m128_f32[0];
+		return m_CopiedState.Me.Object3D->GetTransform(m_CopiedState.Me).Translation.m128_f32[0];
 	}
 	else if (Identifier == "MyPosition.y")
 	{
-		return m_CopiedState.MyPosition->m128_f32[1];
+		return m_CopiedState.Me.Object3D->GetTransform(m_CopiedState.Me).Translation.m128_f32[1];
 	}
 	else if (Identifier == "MyPosition.z")
 	{
-		return m_CopiedState.MyPosition->m128_f32[2];
+		return m_CopiedState.Me.Object3D->GetTransform(m_CopiedState.Me).Translation.m128_f32[2];
 	}
 	else if (Identifier == "DistanceToEnemy")
 	{
-		XMVECTOR Diff{ *m_CopiedState.MyPosition - *m_CopiedState.EnemyPosition };
+		XMVECTOR Diff{
+			m_CopiedState.Me.Object3D->GetTransform(m_CopiedState.Me).Translation - 
+			m_CopiedState.Enemy.Object3D->GetTransform(m_CopiedState.Enemy).Translation };
 		return XMVectorGetX(XMVector3Length(Diff));
 	}
 	else if (m_umapStackVariableNameToID.find(Identifier) != m_umapStackVariableNameToID.end())

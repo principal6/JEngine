@@ -30,6 +30,7 @@
 #include "../Physics/PhysicsEngine.h"
 #include "../AI/Intelligence.h"
 #include "../AI/Pattern.h"
+#include "../AI/MonsterSpawner.h"
 
 #include "TinyXml2/tinyxml2.h"
 #include "ImGui/imgui.h"
@@ -494,7 +495,8 @@ public:
 	CObject3D* GetObject3D(const std::string& Name, bool bShowWarning = true) const;
 	const std::map<std::string, size_t>& GetObject3DMap() const { return m_mapObject3DNameToIndex; }
 
-	void DeleteObject3DInstance(CObject3D* Object3D, const std::string& Name);
+	void DeleteObject3DInstance(CObject3D* const Object3D, const std::string& Name);
+	void ClearObject3DInstances(CObject3D* const Object3D);
 
 	bool InsertObject3DLine(const std::string& Name, bool bShowWarning = true);
 	void ClearObject3DLines();
@@ -525,6 +527,11 @@ public:
 	bool InsertBMFontRenederer(const std::string& BMFontRendererName, const std::string& FNT_FileName);
 	CBMFontRenderer* GetBMFontRenderer(const std::string& BMFontRendererName);
 	void ClearBMFontRenderers();
+
+public:
+	bool InsertMonsterSpawner(const std::string& Name, const SMonsterSpawnerData& Data);
+	void DeleteMonsterSpawner(const std::string& Name);
+	void ClearMonsterSpanwers();
 
 public:
 	bool SetMode(EMode eMode);
@@ -815,7 +822,11 @@ private:
 	std::unique_ptr<CObject3D>				m_PickedPointRep{};
 
 private:
-	std::unique_ptr<CIntelligence>			m_Intelligence{};
+	std::unique_ptr<CIntelligence>					m_Intelligence{};
+
+private:
+	std::vector<std::unique_ptr<CMonsterSpawner>>	m_vMonsterSpawners{};
+	std::map<std::string, size_t>					m_mapMonsterSpawnerNameToIndex{};
 
 // Shadow map
 private:

@@ -183,6 +183,8 @@ static const char* KGUIString_Content[][2]
 	{ "Intelligence pattern",					u8"지능 패턴"							},
 	{ "Content",								u8"내용"								},
 	{ "Pattern file viewer",					u8"패턴 파일 뷰어"						},
+	{ "Monster spawner",						u8"몬스터 스포너"						},
+	{ "Monster spawner list",					u8"몬스터 스포너 목록"					},
 
 	// IBL tab
 	{ "Environment map",						u8"환경 맵"								},
@@ -274,6 +276,23 @@ static const char* KGUIString_Content[][2]
 
 	{ "Animation texture",						u8"애니메이션 텍스처"					},
 	{ "Foliage model",							u8"초목 모델"							},
+
+	// MonsterSpawner
+	{ "Spawn only once",						u8"한 번만 스폰"						},
+	{ "Spawn once in a while",					u8"시간마다 스폰"						},
+	{ "Spawn n times",							u8"n번 스폰"							},
+	{ "Spawn n maintained",						u8"n개 유지 스폰"						},
+	{ "Spawner name",							u8"스포너 이름"							},
+	{ "Object to be linked",					u8"연결할 오브젝트"						},
+	{ "Pattern to be linked",					u8"연결할 패턴"							},
+	{ "Selected spawner",						u8"선택된 스포너"						},
+	{ "Linked object",							u8"연결된 오브젝트"						},
+	{ "Linked pattern",							u8"연결된 패턴"							},
+	{ "Spawner center",							u8"스포너 중심"							},
+	{ "Spawner size",							u8"스포너 크기"							},
+	{ "Spawning condition",						u8"스포닝 조건"							},
+	{ "Spawning interval (ms)",					u8"스포닝 간격 (ms)"					},
+	{ "Spawning max count",						u8"최대 스포닝 횟수"					},
 };
 
 static const char* KGUIString_MB[][2]
@@ -316,6 +335,10 @@ static const char* KGUIString_MB[][2]
 
 	{ "Load a model file",							"모델 파일을 불러오세요"					},
 	{ "Model loading",								"모델 불러오기"								},
+
+	{ "MonsterSpawner creation",					"몬스터 스포터 생성"						},
+	{ "No pattern is available",					"패턴이 존재하지 않습니다"					},
+	{ "No object is available",						"오브젝트가 존재하지 않습니다"				},
 };
 
 static const char* KGUIString_DLG[][2]
@@ -544,6 +567,8 @@ enum class EGUIString_Content
 	IntelligencePattern,
 	Content,
 	PatternFileViewer,
+	MonsterSpawner,
+	MonsterSpawnerList,
 
 	// IBL tab
 	EnvironmentMap,
@@ -634,6 +659,22 @@ enum class EGUIString_Content
 
 	AnimationTexture,
 	FoliageModel,
+
+	SpawnOnlyOnce,
+	SpawnOnceInAWhile,
+	SpawnNTimes,
+	SpawnNMaintained,
+	SpawnerName,
+	ObjectToBeLinked,
+	PatternToBeLinked,
+	SelectedSpawner,
+	LinkedObject,
+	LinkedPattern,
+	SpawnerCenter,
+	SpawnerSize,
+	SpawningCondition,
+	SpawningInterval_ms,
+	SpawningMaxCount,
 };
 
 enum class EGUIString_MB
@@ -676,6 +717,10 @@ enum class EGUIString_MB
 
 	LoadAModelFile,
 	ModelLoading,
+
+	MonsterSpawnerCreation,
+	NoPatternIsAvailable,
+	NoObjectIsAvailable,
 };
 
 enum class EGUIString_DLG
