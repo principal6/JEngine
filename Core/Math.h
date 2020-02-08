@@ -33,8 +33,9 @@ static bool IntersectSphereSphere(const XMVECTOR& CenterA, float RadiusA, const 
 static bool IntersectSphereAABB(const XMVECTOR& SphereCenter, float SphereRadius, const XMVECTOR& AABBCenter, float HalfSizeX, float HalfSizeY, float HalfSizeZ);
 static bool IntersectAABBAABB(const XMVECTOR& ACenter, float AHalfSizeX, float AHalfSizeY, float AHalfSizeZ,
 	const XMVECTOR& BCenter, float BHalfSizeX, float BHalfSizeY, float BHalfSizeZ);
-static XMVECTOR GetClosestPointSphere(const XMVECTOR& Point, const XMVECTOR SphereCenter, float SphereRadius);
-static XMVECTOR GetClosestPointAABB(const XMVECTOR& Point, const XMVECTOR AABBCenter, float HalfSizeX, float HalfSizeY, float HalfSizeZ);
+static XMVECTOR GetCloesetPointLine(const XMVECTOR& Point, const XMVECTOR& LineA, const XMVECTOR& LineB);
+static XMVECTOR GetClosestPointSphere(const XMVECTOR& Point, const XMVECTOR& SphereCenter, float SphereRadius);
+static XMVECTOR GetClosestPointAABB(const XMVECTOR& Point, const XMVECTOR& AABBCenter, float HalfSizeX, float HalfSizeY, float HalfSizeZ);
 static XMVECTOR GetAABBAABBCollisionNormal(
 	const XMVECTOR& DynamicAABBDir, const XMVECTOR& DynamicAABBClosestPoint,
 	const XMVECTOR& StaticAABBCenter, float StaticAABBHalfSizeX, float StaticAABBHalfSizeY, float StaticAABBHalfSizeZ);
@@ -426,13 +427,20 @@ static bool IntersectAABBAABB(
 	return XMVector3LessOrEqual(DifferenceAbs, HalfSizeSum);
 }
 
-static XMVECTOR GetClosestPointSphere(const XMVECTOR& Point, const XMVECTOR SphereCenter, float SphereRadius)
+static XMVECTOR GetCloesetPointLine(const XMVECTOR& Point, const XMVECTOR& LineA, const XMVECTOR& LineB)
+{
+	XMVECTOR Direction{ XMVector3Normalize(LineB - LineA) };
+	XMVECTOR AP{ Point - LineA };
+	return LineA + XMVector3Dot(AP, Direction) * Direction;
+}
+
+static XMVECTOR GetClosestPointSphere(const XMVECTOR& Point, const XMVECTOR& SphereCenter, float SphereRadius)
 {
 	XMVECTOR CenterToPoint{ Point - SphereCenter };
 	return SphereCenter + XMVector3Normalize(CenterToPoint) * SphereRadius;
 }
 
-static XMVECTOR GetClosestPointAABB(const XMVECTOR& Point, const XMVECTOR AABBCenter, float HalfSizeX, float HalfSizeY, float HalfSizeZ)
+static XMVECTOR GetClosestPointAABB(const XMVECTOR& Point, const XMVECTOR& AABBCenter, float HalfSizeX, float HalfSizeY, float HalfSizeZ)
 {
 	const float CenterX{ XMVectorGetX(AABBCenter) };
 	const float CenterY{ XMVectorGetY(AABBCenter) };

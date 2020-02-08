@@ -31,18 +31,6 @@ void CGame::CreateWin32(WNDPROC const WndProc, const std::string& WindowName, bo
 	InitializeImGui("Asset\\D2Coding.ttf", 15.0f);
 }
 
-void CGame::CreateSpriteFont(const wstring& FontFileName)
-{
-	if (!m_Device)
-	{
-		MB_WARN(GUI_STRING_MB(EGUIString_MB::NoCreatedDevice), GUI_STRING_MB(EGUIString_MB::SpriteFontCreation));
-		return;
-	}
-
-	m_SpriteBatch = make_unique<SpriteBatch>(m_DeviceContext.Get());
-	m_SpriteFont = make_unique<SpriteFont>(m_Device.Get(), FontFileName.c_str());
-}
-
 void CGame::Destroy()
 {
 	ImGui_ImplDX11_Shutdown();
@@ -137,7 +125,7 @@ void CGame::InitializeGameData()
 		};
 
 		m_CascadedShadowMap = make_unique<CCascadedShadowMap>(m_Device.Get(), m_DeviceContext.Get());
-		m_CascadedShadowMap->Create(vLODData, XMFLOAT2(1024, 1024), 10.0f);
+		m_CascadedShadowMap->Create(vLODData, XMFLOAT2(1024, 1024), 15.0f);
 	}
 
 	if (!m_DirectionalLightFSQ)
@@ -1032,7 +1020,19 @@ void CGame::EmptyScene()
 	ClearPatterns();
 }
 
-void CGame::LoadScene(const string& FileName, const std::string& SceneContentDirectory)
+void CGame::LoadScene(const std::string& FileName)
+{
+	std::string _FileName{ FileName };
+	for (auto& Ch : _FileName)
+	{
+		if (Ch == '/') Ch = '\\';
+	}
+
+	size_t Last{ _FileName.find_last_of('.') };
+	LoadScene(_FileName, _FileName.substr(0, Last));
+}
+
+void CGame::LoadScene(const std::string& FileName, const std::string& SceneContentDirectory)
 {
 	EmptyScene();
 
@@ -2628,7 +2628,7 @@ bool CGame::SetMode(EMode eMode)
 			MB_WARN(GUI_STRING_MB(EGUIString_MB::FirstSetAPlayerObject), GUI_STRING_MB(EGUIString_MB::ModeSetting));
 			return false;
 		}
-		
+
 		DeselectAll();
 
 		m_PhysicsEngine.ShouldApplyGravity(true);
@@ -2636,6 +2636,28 @@ bool CGame::SetMode(EMode eMode)
 	else
 	{
 		m_PhysicsEngine.ShouldApplyGravity(false);
+	}
+
+	if (m_eMode == EMode::Test)
+	{
+		m_Intelligence->ClearBehaviors();
+
+		m_PhysicsEngine.GetPlayerObject()->SetTransform(m_SavedPlayerTransform);
+		m_PhysicsEngine.GetPlayerObject()->SetPhysics(m_SavedPlayerPhysics);
+
+		UseCamera(m_SavedCurrentCamera);
+
+		SetRenderingFlags(m_SavedRenderingFlags);
+	}
+	else if (eMode != EMode::Edit)
+	{
+		m_SavedPlayerTransform = m_PhysicsEngine.GetPlayerObject()->GetTransform();
+		m_SavedPlayerPhysics = m_PhysicsEngine.GetPlayerObject()->GetPhysics();
+		
+		m_SavedCurrentCamera = GetCurrentCamera();
+		UseCamera(GetPlayerCamera());
+
+		m_SavedRenderingFlags = GetRenderingFlags();
 	}
 
 	m_eMode = eMode;
@@ -2647,8 +2669,6 @@ bool CGame::SetMode(EMode eMode)
 	else
 	{
 		if (m_Terrain) m_Terrain->ShouldShowSelection(FALSE);
-
-		DeselectAll();
 	}
 
 	return true;
@@ -4812,19 +4832,7 @@ void CGame::DrawEditorGUI()
 		{
 			if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::InitTest)))
 			{
-				if (SetMode(EMode::Test))
-				{
-					m_SavedPlayerTransform = m_PhysicsEngine.GetPlayerObject()->GetTransform();
-					m_SavedPlayerPhysics = m_PhysicsEngine.GetPlayerObject()->GetPhysics();
-
-					m_SavedCurrentCamera = m_PtrCurrentCamera;
-
-					UseCamera(m_PtrPlayerCamera);
-
-					m_SavedRenderingFlags = GetRenderingFlags();
-
-					TurnOnRenderingFlag(CGame::EFlagsRendering::DrawPickingData);
-				}
+				SetMode(EMode::Test);
 			}
 		}
 		ImGui::End();
@@ -4838,17 +4846,7 @@ void CGame::DrawEditorGUI()
 		{
 			if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::QuitTest)))
 			{
-				if (SetMode(EMode::Edit))
-				{
-					m_PhysicsEngine.GetPlayerObject()->SetTransform(m_SavedPlayerTransform);
-					m_PhysicsEngine.GetPlayerObject()->SetPhysics(m_SavedPlayerPhysics);
-					
-					m_Intelligence->ClearBehaviors();
-
-					UseCamera(m_SavedCurrentCamera);
-
-					SetRenderingFlags(m_SavedRenderingFlags);
-				}
+				SetMode(EMode::Edit);
 			}
 		}
 		ImGui::End();
@@ -8580,16 +8578,6 @@ Mouse::State CGame::GetMouseState() const
 	m_Mouse->ResetScrollWheelValue();
 
 	return ResultState;
-}
-
-auto CGame::GetSpriteBatchPtr() const -> SpriteBatch*
-{
-	return m_SpriteBatch.get();
-}
-
-auto CGame::GetSpriteFontPtr() const -> SpriteFont*
-{
-	return m_SpriteFont.get();
 }
 
 const XMFLOAT2& CGame::GetWindowSize() const

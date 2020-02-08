@@ -207,9 +207,9 @@ public:
 
 	enum class EMode
 	{
-		Play,
 		Edit,
-		Test
+		Test,
+		Play
 	};
 
 	enum class EEditMode
@@ -371,7 +371,6 @@ public:
 
 public:
 	void CreateWin32(WNDPROC const WndProc, const std::string& WindowName, bool bWindowed);
-	void CreateSpriteFont(const std::wstring& FontFileName);
 	void Destroy();
 
 private:
@@ -403,6 +402,7 @@ public:
 
 public:
 	void EmptyScene();
+	void LoadScene(const std::string& FileName);
 	void LoadScene(const std::string& FileName, const std::string& SceneContentDirectory);
 	void SaveScene(const std::string& FileName, const std::string& SceneContentDirectory);
 
@@ -589,8 +589,6 @@ public:
 	auto GetDeviceContextPtr() const->ID3D11DeviceContext*;
 	auto GetKeyState() const->Keyboard::State;
 	auto GetMouseState() const->Mouse::State;
-	auto GetSpriteBatchPtr() const->SpriteBatch*;
-	auto GetSpriteFontPtr() const->SpriteFont*;
 	auto GetWindowSize() const->const XMFLOAT2&;
 	auto GetDepthStencilStateLessEqualNoWrite() const->ID3D11DepthStencilState*;
 	auto GetBlendStateAlphaToCoverage() const->ID3D11BlendState*;
@@ -986,8 +984,6 @@ private:
 
 	ComPtr<ID3D11RasterizerState>			m_RSCCWCullFront{};
 
-	std::unique_ptr<SpriteBatch>			m_SpriteBatch{};
-	std::unique_ptr<SpriteFont>				m_SpriteFont{};
 	std::unique_ptr<CommonStates>			m_CommonStates{};
 
 	std::vector<D3D11_VIEWPORT>				m_vViewports{};

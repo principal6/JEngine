@@ -13,9 +13,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	CGame Game{ hInstance, KGameWindowSize };
 
 	Game.CreateWin32(WndProc, u8"JEngine", true);
-	Game.CreateSpriteFont(L"Asset\\dotumche_10_korean.spritefont");
 
-	Game.SetMode(CGame::EMode::Edit);
 	Game.SetRenderingFlags(CGame::EFlagsRendering::UseLighting | CGame::EFlagsRendering::DrawMiniAxes | CGame::EFlagsRendering::DrawGrid |
 		CGame::EFlagsRendering::DrawTerrainHeightMapTexture | CGame::EFlagsRendering::DrawTerrainMaskingTexture | CGame::EFlagsRendering::DrawIdentifiers |
 		CGame::EFlagsRendering::DrawTerrainFoliagePlacingTexture | CGame::EFlagsRendering::TessellateTerrain | 
@@ -23,6 +21,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
 	//Game.CreateDynamicSky("Asset\\Sky.xml", 30.0f);
 	Game.CreateStaticSky(30.0f);
+
+	//Game.LoadScene("Scene\\mayan_dungeon.scene");
+
+	//Game.SetMode(CGame::EMode::Play);
 
 	// Main loop
 	while (true)

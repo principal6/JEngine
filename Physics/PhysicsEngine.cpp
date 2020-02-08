@@ -318,6 +318,8 @@ void CPhysicsEngine::Update(float DeltaTime)
 
 void CPhysicsEngine::UpdateObject(float DeltaTime, CObject3D* const Object)
 {
+	if (!Object) return;
+
 	SObjectIdentifier Identifier{ Object };
 	if (Object->IsInstanced())
 	{

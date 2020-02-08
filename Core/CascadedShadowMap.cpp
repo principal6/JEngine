@@ -127,7 +127,8 @@ void CCascadedShadowMap::Set(size_t LOD, const XMMATRIX& Projection, const XMVEC
 	m_vShadowMapFrustumVertices[LOD] = CalculateShadowMapFrustumVertices(DirectionToLight, m_vShadowMapFrustums[LOD]);
 	m_vViewFrustumVertices[LOD] = CalculateViewFrustumVertices(Projection, EyePosition, ViewDirection, DirectionToLight, ZNear, ZFar);
 
-	m_vShadowMaps[LOD].ViewMatrix = XMMatrixLookToLH(m_vShadowMapFrustums[LOD].LightPosition, m_vShadowMapFrustums[LOD].LightForward, m_vShadowMapFrustums[LOD].LightUp);
+	m_vShadowMaps[LOD].ViewMatrix = XMMatrixLookToLH(
+		m_vShadowMapFrustums[LOD].LightPosition, m_vShadowMapFrustums[LOD].LightForward, m_vShadowMapFrustums[LOD].LightUp);
 	m_vShadowMaps[LOD].ProjectionMatrix = XMMatrixOrthographicOffCenterLH(
 		-m_vShadowMapFrustums[LOD].HalfSize.x, +m_vShadowMapFrustums[LOD].HalfSize.x, 
 		-m_vShadowMapFrustums[LOD].HalfSize.y, +m_vShadowMapFrustums[LOD].HalfSize.y,
