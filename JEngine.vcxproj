@@ -89,7 +89,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)FreeType;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -136,13 +136,14 @@
     <ClCompile Include="AI\Pattern.cpp" />
     <ClCompile Include="AI\SyntaxTree.cpp" />
     <ClCompile Include="AI\Tokenizer.cpp" />
+    <ClCompile Include="Core\BFNTBaker.cpp" />
+    <ClCompile Include="Core\BFNTLoader.cpp" />
+    <ClCompile Include="Core\BFNTRenderer.cpp" />
     <ClCompile Include="Core\Billboard.cpp" />
     <ClCompile Include="Core\BinaryData.cpp" />
-    <ClCompile Include="Core\BMFont.cpp" />
     <ClCompile Include="Core\Camera.cpp" />
     <ClCompile Include="Core\ConstantBuffer.cpp" />
     <ClCompile Include="Core\FileDialog.cpp" />
-    <ClCompile Include="Core\BMFontRenderer.cpp" />
     <ClCompile Include="Core\FullScreenQuad.cpp" />
     <ClCompile Include="Core\Game.cpp" />
     <ClCompile Include="Core\Light.cpp" />
@@ -250,13 +251,15 @@
     <ClInclude Include="Assimp\Vertex.h" />
     <ClInclude Include="Assimp\XMLTools.h" />
     <ClInclude Include="Assimp\ZipArchiveIOSystem.h" />
+    <ClInclude Include="Core\BFNTBaker.h" />
+    <ClInclude Include="Core\BFNTLoader.h" />
+    <ClInclude Include="Core\BFNTRenderer.h" />
+    <ClInclude Include="Core\BFNTTypes.h" />
     <ClInclude Include="Core\Billboard.h" />
     <ClInclude Include="Core\BinaryData.h" />
-    <ClInclude Include="Core\BMFont.h" />
     <ClInclude Include="Core\Camera.h" />
     <ClInclude Include="Core\ConstantBuffer.h" />
     <ClInclude Include="Core\FileDialog.h" />
-    <ClInclude Include="Core\BMFontRenderer.h" />
     <ClInclude Include="Core\FullScreenQuad.h" />
     <ClInclude Include="Core\Game.h" />
     <ClInclude Include="Core\GUIConstants.h" />
@@ -295,6 +298,7 @@
     <ClInclude Include="Editor\CubemapRep.h" />
     <ClInclude Include="Editor\Gizmo3D.h" />
     <ClInclude Include="Editor\IBLBaker.h" />
+    <ClInclude Include="FreeType\ft2build.h" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />
     <ClInclude Include="ImGui\imgui_impl_dx11.h" />
@@ -310,12 +314,14 @@
     <ClInclude Include="Model\Object3DLine.h" />
     <ClInclude Include="Model\ObjectTypes.h" />
     <ClInclude Include="Physics\PhysicsEngine.h" />
+    <ClInclude Include="stb\stb_image_write.h" />
     <ClInclude Include="TinyXml2\tinyxml2.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="Assimp\assimp-vc142-mtd.lib" />
     <Library Include="DirectXTex\DirectXTex.lib" />
     <Library Include="DirectXTK\DirectXTK.lib" />
+    <Library Include="FreeType\freetype_x64_debug.lib" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assimp\.editorconfig" />

@@ -16,7 +16,6 @@ VS_OUTPUT main(VS_INPUT Input)
 
 	Output.Position = mul(Input.Position, g_Projection);
 	Output.TexCoord = Input.TexCoord;
-	Output.Color = Input.Color;
 
 	return Output;
 }

@@ -19,7 +19,7 @@
 #include "Light.h"
 #include "CascadedShadowMap.h"
 #include "FullScreenQuad.h"
-#include "BMFontRenderer.h"
+#include "BFNTRenderer.h"
 #include "../Model/Object3D.h"
 #include "../Model/Object3DLine.h"
 #include "../Model/Object2D.h"
@@ -524,9 +524,9 @@ public:
 	CPattern* GetPattern(const std::string& FileName);
 
 public:
-	bool InsertBMFontRenederer(const std::string& BMFontRendererName, const std::string& FNT_FileName);
-	CBMFontRenderer* GetBMFontRenderer(const std::string& BMFontRendererName);
-	void ClearBMFontRenderers();
+	bool InsertBFNTRenederer(const std::string& BFNTRendererName, const std::string& BFNT_FileName);
+	CBFNTRenderer* GetBFNTRenderer(const std::string& BFNTRendererName);
+	void ClearBFNTRenderers();
 
 public:
 	bool InsertMonsterSpawner(const std::string& Name, const SMonsterSpawnerData& Data);
@@ -863,11 +863,11 @@ private:
 	CCamera*								m_PtrPlayerCamera{};
 	std::unique_ptr<CObject3D>				m_CameraRep{};
 
-// BMFont renderer
+// BFNT renderer
 private:
-	std::vector<std::unique_ptr<CBMFontRenderer>>	m_vBMFontRenderers{};
-	std::unordered_map<std::string, size_t>			m_umapBMFontRendererNameToIndex{};
-	std::unique_ptr<CBMFontRenderer>				m_BMFRIdentifier{};
+	std::vector<std::unique_ptr<CBFNTRenderer>>	m_vBFNTRenderers{};
+	std::unordered_map<std::string, size_t>		m_umapBFNTRendererNameToIndex{};
+	std::unique_ptr<CBFNTRenderer>				m_BFNT_Identifiers{};
 
 // Scene testing
 private:

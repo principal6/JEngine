@@ -34,6 +34,12 @@
     <Filter Include="Editor">
       <UniqueIdentifier>{91dec2b4-47f7-479e-90cb-cef5f8a2dc05}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FreeType">
+      <UniqueIdentifier>{bef2f79f-0384-4d21-a9a8-d706179549df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="stb">
+      <UniqueIdentifier>{7c109f9c-9111-4124-b8ce-c297b9dfd153}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Shader.cpp">
@@ -139,14 +145,17 @@
     <ClCompile Include="Core\UTF8.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Core\BMFont.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\BMFontRenderer.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="AI\MonsterSpawner.cpp">
       <Filter>AI</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\BFNTBaker.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\BFNTLoader.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\BFNTRenderer.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -561,17 +570,29 @@
     <ClInclude Include="Core\UTF8.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\BMFont.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\BMFontRenderer.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Core\GUIConstants.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="AI\MonsterSpawner.h">
       <Filter>AI</Filter>
+    </ClInclude>
+    <ClInclude Include="FreeType\ft2build.h">
+      <Filter>FreeType</Filter>
+    </ClInclude>
+    <ClInclude Include="stb\stb_image_write.h">
+      <Filter>stb</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\BFNTBaker.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\BFNTTypes.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\BFNTLoader.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\BFNTRenderer.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -583,6 +604,9 @@
     </Library>
     <Library Include="DirectXTex\DirectXTex.lib">
       <Filter>DirectXTex</Filter>
+    </Library>
+    <Library Include="FreeType\freetype_x64_debug.lib">
+      <Filter>FreeType</Filter>
     </Library>
   </ItemGroup>
   <ItemGroup>

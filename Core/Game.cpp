@@ -149,10 +149,10 @@ void CGame::InitializeGameData()
 
 void CGame::InitializeEditorAssets()
 {
-	if (!m_BMFRIdentifier)
+	if (!m_BFNT_Identifiers)
 	{
-		m_BMFRIdentifier = make_unique<CBMFontRenderer>(m_Device.Get(), m_DeviceContext.Get());
-		m_BMFRIdentifier->Create("Asset\\D2Coding_16px.fnt", m_WindowSize);
+		m_BFNT_Identifiers = make_unique<CBFNTRenderer>(m_Device.Get(), m_DeviceContext.Get());
+		m_BFNT_Identifiers->Create("Asset\\D2Coding_16.bfnt", m_WindowSize);
 	}	
 
 	if (!m_Gizmo3D)
@@ -2659,35 +2659,35 @@ CPattern* CGame::GetPattern(const std::string& FileName)
 	return nullptr;
 }
 
-bool CGame::InsertBMFontRenederer(const std::string& BMFontRendererName, const std::string& FNT_FileName)
+bool CGame::InsertBFNTRenederer(const std::string& BFNTRendererName, const std::string& BFNT_FileName)
 {
-	if (m_umapBMFontRendererNameToIndex.find(BMFontRendererName) != m_umapBMFontRendererNameToIndex.end())
+	if (m_umapBFNTRendererNameToIndex.find(BFNTRendererName) != m_umapBFNTRendererNameToIndex.end())
 	{
-		MB_WARN(GUI_STRING_MB(EGUIString_MB::NameCollision), GUI_STRING_MB(EGUIString_MB::BMFontRendererCreation));
+		MB_WARN(GUI_STRING_MB(EGUIString_MB::NameCollision), GUI_STRING_MB(EGUIString_MB::BFNTRendererCreation));
 		return false;
 	}
 
-	m_vBMFontRenderers.emplace_back(make_unique<CBMFontRenderer>(m_Device.Get(), m_DeviceContext.Get()));
-	m_vBMFontRenderers.back()->Create(FNT_FileName, m_WindowSize);
+	m_vBFNTRenderers.emplace_back(make_unique<CBFNTRenderer>(m_Device.Get(), m_DeviceContext.Get()));
+	m_vBFNTRenderers.back()->Create(BFNT_FileName, m_WindowSize);
 
-	m_umapBMFontRendererNameToIndex[BMFontRendererName] = m_vBMFontRenderers.size() - 1;
+	m_umapBFNTRendererNameToIndex[BFNTRendererName] = m_vBFNTRenderers.size() - 1;
 	
 	return true;
 }
 
-CBMFontRenderer* CGame::GetBMFontRenderer(const std::string& BMFontRendererName)
+CBFNTRenderer* CGame::GetBFNTRenderer(const std::string& BFNTRendererName)
 {
-	if (m_umapBMFontRendererNameToIndex.find(BMFontRendererName) != m_umapBMFontRendererNameToIndex.end())
+	if (m_umapBFNTRendererNameToIndex.find(BFNTRendererName) != m_umapBFNTRendererNameToIndex.end())
 	{
-		return m_vBMFontRenderers[m_umapBMFontRendererNameToIndex.at(BMFontRendererName)].get();
+		return m_vBFNTRenderers[m_umapBFNTRendererNameToIndex.at(BFNTRendererName)].get();
 	}
 	return nullptr;
 }
 
-void CGame::ClearBMFontRenderers()
+void CGame::ClearBFNTRenderers()
 {
-	m_umapBMFontRendererNameToIndex.clear();
-	m_vBMFontRenderers.clear();
+	m_umapBFNTRendererNameToIndex.clear();
+	m_vBFNTRenderers.clear();
 }
 
 bool CGame::InsertMonsterSpawner(const std::string& Name, const SMonsterSpawnerData& Data)
@@ -4372,7 +4372,7 @@ void CGame::Draw()
 		SetUniversalRSState();
 	}
 
-	// Object2D & BMFontRenderer & Billboard
+	// Object2D & BFNTRenderer & Billboard
 	{
 		m_DeviceContext->OMSetDepthStencilState(m_CommonStates->DepthNone(), 0);
 		m_DeviceContext->GSSetShader(nullptr, nullptr, 0);
@@ -4901,8 +4901,6 @@ void CGame::DrawIdentifiers()
 	static XMFLOAT4 ColorMonster{ 1, 0, 0, 1 };
 	static XMFLOAT4 ColorNone{ 0.5f, 0.5f, 0.5f, 1 };
 
-	m_BMFRIdentifier->ClearRegistered();
-
 	for (const auto& Object3DPair : GetObject3DMap())
 	{
 		CObject3D* const Obejct3D{ GetObject3D(Object3DPair.first) };
@@ -4933,7 +4931,7 @@ void CGame::DrawIdentifiers()
 				if (XMVectorGetZ(NDCPosition) < 0 || XMVectorGetZ(NDCPosition) > +1.0f) continue;
 
 				XMFLOAT2 ScreenPosition{ GetScreenPixelPositionFromNDCPosition(NDCPosition) };
-				m_BMFRIdentifier->RegisterString(Obejct3D->GetName().c_str(), ScreenPosition, Color);
+				m_BFNT_Identifiers->RenderString(Obejct3D->GetName().c_str(), ScreenPosition, Color);
 
 				XMFLOAT2 _P{ ScreenPosition };
 				_P.y += 16;
@@ -4943,7 +4941,7 @@ void CGame::DrawIdentifiers()
 				_C.y += 0.25f;
 				_C.z += 0.25f;
 
-				m_BMFRIdentifier->RegisterString(Instance.Name.c_str(), _P, _C);
+				m_BFNT_Identifiers->RenderString(Instance.Name.c_str(), _P, _C);
 			}
 		}
 		else
@@ -4954,11 +4952,9 @@ void CGame::DrawIdentifiers()
 			if (XMVectorGetZ(NDCPosition) < 0 || XMVectorGetZ(NDCPosition) > +1.0f) continue;
 
 			XMFLOAT2 ScreenPosition{ GetScreenPixelPositionFromNDCPosition(NDCPosition) };
-			m_BMFRIdentifier->RegisterString(Obejct3D->GetName().c_str(), ScreenPosition, Color);
+			m_BFNT_Identifiers->RenderString(Obejct3D->GetName().c_str(), ScreenPosition, Color);
 		}
 	}
-
-	m_BMFRIdentifier->RenderRegistered();
 }
 
 void CGame::DrawEditorGUI()

@@ -327,7 +327,7 @@ static const char* KGUIString_MB[][2]
 	{ "Object2D deletion",							"오브젝트2D 삭제"							},
 	{ "Object2D getting",							"오브젝트2D 얻어오기"						},
 
-	{ "BMFontRendeer creation",						"BMFont렌더러 생성"							},
+	{ "BFNTRenderer creation",						"BFNT 렌더러 생성"							},
 
 	{ "Mode setting",								"모드 지정"									},
 	{ "First set a player camera",					"먼저 플레이어 카메라를 지정해 주세요"		},
@@ -709,7 +709,7 @@ enum class EGUIString_MB
 	Object2DDeletion,
 	Object2DGetting,
 
-	BMFontRendererCreation,
+	BFNTRendererCreation,
 
 	ModeSetting,
 	FirstSetAPlayerCamera,
