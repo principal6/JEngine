@@ -2659,35 +2659,35 @@ CPattern* CGame::GetPattern(const std::string& FileName)
 	return nullptr;
 }
 
-bool CGame::InsertBFNTRenederer(const std::string& BFNTRendererName, const std::string& BFNT_FileName)
+bool CGame::InsertBFNTRenderer(const std::string& BFNTRendererName, const std::string& BFNT_FileName)
 {
-	if (m_umapBFNTRendererNameToIndex.find(BFNTRendererName) != m_umapBFNTRendererNameToIndex.end())
+	CBFNTRenderer* New{ new CBFNTRenderer(m_Device.Get(), m_DeviceContext.Get()) };
+	if (m_BFNTRendererPool.Insert(BFNTRendererName, New))
+	{
+		New->Create(BFNT_FileName, m_WindowSize);
+	}
+	else
 	{
 		MB_WARN(GUI_STRING_MB(EGUIString_MB::NameCollision), GUI_STRING_MB(EGUIString_MB::BFNTRendererCreation));
 		return false;
 	}
 
-	m_vBFNTRenderers.emplace_back(make_unique<CBFNTRenderer>(m_Device.Get(), m_DeviceContext.Get()));
-	m_vBFNTRenderers.back()->Create(BFNT_FileName, m_WindowSize);
-
-	m_umapBFNTRendererNameToIndex[BFNTRendererName] = m_vBFNTRenderers.size() - 1;
-	
 	return true;
 }
 
-CBFNTRenderer* CGame::GetBFNTRenderer(const std::string& BFNTRendererName)
+void CGame::DeleteBFNTRenderer(const std::string& BFNTRendererName)
 {
-	if (m_umapBFNTRendererNameToIndex.find(BFNTRendererName) != m_umapBFNTRendererNameToIndex.end())
-	{
-		return m_vBFNTRenderers[m_umapBFNTRendererNameToIndex.at(BFNTRendererName)].get();
-	}
-	return nullptr;
+	m_BFNTRendererPool.Delete(BFNTRendererName);
 }
 
 void CGame::ClearBFNTRenderers()
 {
-	m_umapBFNTRendererNameToIndex.clear();
-	m_vBFNTRenderers.clear();
+	m_BFNTRendererPool.Clear();
+}
+
+CBFNTRenderer* CGame::GetBFNTRenderer(const std::string& BFNTRendererName)
+{
+	return m_BFNTRendererPool.Get(BFNTRendererName);
 }
 
 bool CGame::InsertMonsterSpawner(const std::string& Name, const SMonsterSpawnerData& Data)

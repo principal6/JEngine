@@ -594,6 +594,9 @@
     <ClInclude Include="Core\BFNTRenderer.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\DynamicPool.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="DirectXTK\DirectXTK.lib">

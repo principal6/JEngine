@@ -265,6 +265,7 @@
     <ClInclude Include="Core\GUIConstants.h" />
     <ClInclude Include="Core\Light.h" />
     <ClInclude Include="Core\Math.h" />
+    <ClInclude Include="Core\DynamicPool.h" />
     <ClInclude Include="Core\PrimitiveGenerator.h" />
     <ClInclude Include="Core\Shader.h" />
     <ClInclude Include="Core\CascadedShadowMap.h" />

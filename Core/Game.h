@@ -20,6 +20,7 @@
 #include "CascadedShadowMap.h"
 #include "FullScreenQuad.h"
 #include "BFNTRenderer.h"
+#include "DynamicPool.h"
 #include "../Model/Object3D.h"
 #include "../Model/Object3DLine.h"
 #include "../Model/Object2D.h"
@@ -524,9 +525,10 @@ public:
 	CPattern* GetPattern(const std::string& FileName);
 
 public:
-	bool InsertBFNTRenederer(const std::string& BFNTRendererName, const std::string& BFNT_FileName);
-	CBFNTRenderer* GetBFNTRenderer(const std::string& BFNTRendererName);
+	bool InsertBFNTRenderer(const std::string& BFNTRendererName, const std::string& BFNT_FileName);
+	void DeleteBFNTRenderer(const std::string& BFNTRendererName);
 	void ClearBFNTRenderers();
+	CBFNTRenderer* GetBFNTRenderer(const std::string& BFNTRendererName);
 
 public:
 	bool InsertMonsterSpawner(const std::string& Name, const SMonsterSpawnerData& Data);
@@ -865,9 +867,9 @@ private:
 
 // BFNT renderer
 private:
-	std::vector<std::unique_ptr<CBFNTRenderer>>	m_vBFNTRenderers{};
-	std::unordered_map<std::string, size_t>		m_umapBFNTRendererNameToIndex{};
+	CDynamicPool<CBFNTRenderer>					m_BFNTRendererPool{};
 	std::unique_ptr<CBFNTRenderer>				m_BFNT_Identifiers{};
+	std::vector<std::unique_ptr<CBFNTRenderer>>	m_vBFNTRenderers_Identifier{};
 
 // Scene testing
 private:
