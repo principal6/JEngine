@@ -1,4 +1,11 @@
+#ifdef _DEBUG
+	#define _CRTDBG_MAP_ALLOC
+	#include <stdlib.h>
+	#include <crtdbg.h>
+#endif
+
 #include "Core/Game.h"
+#include "GUI/GUI.h"
 
 // @TODO
 // implement anti-aliasing
@@ -7,8 +14,15 @@
 IMGUI_IMPL_API LRESULT  ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK WndProc(_In_ HWND hWnd, _In_ UINT Msg, _In_ WPARAM wParam, _In_ LPARAM lParam);
 
+CGUIBase* g_GUI{};
+
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
+#ifdef _DEBUG
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	//_CrtSetBreakAlloc(1374600);
+#endif
+
 	static constexpr XMFLOAT2 KGameWindowSize{ 1280.0f, 720.0f };
 	CGame Game{ hInstance, KGameWindowSize };
 
@@ -25,6 +39,27 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	//Game.LoadScene("Scene\\mayan_dungeon.scene");
 	//Game.LoadScene("Scene\\ai_test.scene");
 	//Game.SetMode(CGame::EMode::Play);
+
+	CGUI Gui{ Game.GetDevicePtr(), Game.GetDeviceContextPtr() };
+	Gui.Create(Game.GethWnd());
+	
+	Gui.CreateButton("btn", SInt2(100, 48));
+	Gui.GetWidget("btn")->SetOffset(SInt2(100, 40));
+	Gui.GetWidget("btn")->SetCaption(u8"윈도우 열기");
+
+	{
+		Gui.CreateWindowWidget(CGUI::EWindowType::Default, "wnd");
+		CWindow* const Window{ (CWindow*)Gui.GetWidget("wnd") };
+		Window->SetOffset(SInt2(200, 40));
+
+		Gui.CreateImageButton(CGUI::EImageButtonType::Button, "imgbtn", SInt2(288, 72), Window);
+		Window->GetChild("imgbtn")->SetOffset(SInt2(20, 50));
+		Window->GetChild("imgbtn")->SetSelectionSize(SInt2(230, 60));
+		Window->GetChild("imgbtn")->SetCaption(u8"이미지 버튼");
+		Window->GetChild("imgbtn")->SetCaptionColor(SFloat4(1, 1, 0.75f, 1));
+	}
+	
+	g_GUI = &Gui;
 
 	// Main loop
 	while (true)
@@ -50,12 +85,35 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 			if (GetKeyState(VK_CONTROL) && (KeyDown == 'c' || KeyDown == 'C')) Game.CopySelectedObject();
 			if (GetKeyState(VK_CONTROL) && (KeyDown == 'v' || KeyDown == 'V')) Game.PasteCopiedObject();
 
+			if (Gui.HasEvent())
+			{
+				auto Evenet{ Gui.GetEvent() };
+				auto& eEventType{ Evenet.eEventType };
+				
+				if (eEventType == EEventType::Clicked)
+				{
+					if (Evenet.Widget == Gui.GetWidget("btn"))
+					{
+						CWindow* const Window{ (CWindow*)Gui.GetWidget("wnd") };
+						Window->Open();
+					}
+					if (Evenet.Widget == Gui.GetWidget("wnd")->GetChild(CGUI::KSysCloseID))
+					{
+						CWindow* const Window{ (CWindow*)Gui.GetWidget("wnd") };
+						Window->Close();
+					}
+				}
+				
+			}
+
 			Game.WalkPlayerToPickedPoint(2.75f);
 			
 			Game.BeginRendering(Colors::CornflowerBlue);
 
 			Game.Update();
 			Game.Draw();
+
+			Gui.Render();
 
 			Game.EndRendering();
 
@@ -68,6 +126,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
 LRESULT CALLBACK WndProc(_In_ HWND hWnd, _In_ UINT Msg, _In_ WPARAM wParam, _In_ LPARAM lParam)
 {
+	if (g_GUI) g_GUI->GenerateEvent(hWnd, Msg, wParam, lParam);
+
 	if (ImGui_ImplWin32_WndProcHandler(hWnd, Msg, wParam, lParam))
 		return 0;
 

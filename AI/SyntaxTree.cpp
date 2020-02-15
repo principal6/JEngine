@@ -3,6 +3,7 @@
 
 using std::vector;
 using std::string;
+using std::swap;
 
 CSyntaxTree::CSyntaxTree()
 {
@@ -13,39 +14,40 @@ CSyntaxTree::~CSyntaxTree()
 	Destroy();
 }
 
-void CSyntaxTree::MoveChildrenAsHead(SSyntaxTreeNode*& From, SSyntaxTreeNode*& To)
+void CSyntaxTree::MoveChildrenAsHead(SSyntaxTreeNode*& Src, SSyntaxTreeNode*& Dest)
 {
-	if (!From || !To) return;
-	if (From->vChildNodes.empty()) return;
+	if (!Src || !Dest) return;
+	if (Src->vChildNodes.empty()) return;
 
-	vector<SSyntaxTreeNode*> ToBackup{ To->vChildNodes };
-	To->vChildNodes.clear();
+	vector<SSyntaxTreeNode*> ToBackup{ Dest->vChildNodes };
+	Dest->vChildNodes.clear();
 
-	for (auto& iter : From->vChildNodes)
+	for (auto& FromChild : Src->vChildNodes)
 	{
-		iter->ParentNode = To;
+		FromChild->ParentNode = Dest;
 	}
-	To->vChildNodes.assign(From->vChildNodes.begin(), From->vChildNodes.end());
-	From->vChildNodes.clear();
+	Dest->vChildNodes.assign(Src->vChildNodes.begin(), Src->vChildNodes.end());
 
-	for (auto& iter : ToBackup)
+	Src->vChildNodes.clear();
+
+	for (auto& ToBackupChild : ToBackup)
 	{
-		To->vChildNodes.emplace_back(iter);
+		Dest->vChildNodes.emplace_back(ToBackupChild);
 	}
 	ToBackup.clear();
 }
 
-void CSyntaxTree::MoveChildrenAsTail(SSyntaxTreeNode*& From, SSyntaxTreeNode*& To)
+void CSyntaxTree::MoveChildrenAsTail(SSyntaxTreeNode*& Src, SSyntaxTreeNode*& Dest)
 {
-	if (!From || !To) return;
-	if (From->vChildNodes.empty()) return;
+	if (!Src || !Dest) return;
+	if (Src->vChildNodes.empty()) return;
 
-	for (auto& iter : From->vChildNodes)
+	for (auto& SrcChild : Src->vChildNodes)
 	{
-		iter->ParentNode = To; // @important
-		To->vChildNodes.emplace_back(iter);
+		SrcChild->ParentNode = Dest; // @important
+		Dest->vChildNodes.emplace_back(SrcChild);
 	}
-	From->vChildNodes.clear();
+	Src->vChildNodes.clear();
 }
 
 void CSyntaxTree::MoveAsHead(SSyntaxTreeNode*& Src, SSyntaxTreeNode*& NewParent)
@@ -54,7 +56,6 @@ void CSyntaxTree::MoveAsHead(SSyntaxTreeNode*& Src, SSyntaxTreeNode*& NewParent)
 	if (!Src->ParentNode) return;
 
 	SSyntaxTreeNode* SrcParentCopy{ Src->ParentNode };
-	SSyntaxTreeNode* SrcCopy{ Src };
 
 	bool bFound{ false };
 	size_t iSrcNode{};
@@ -68,25 +69,22 @@ void CSyntaxTree::MoveAsHead(SSyntaxTreeNode*& Src, SSyntaxTreeNode*& NewParent)
 	}
 	assert(bFound);
 
-	SrcCopy->ParentNode = NewParent;
-	NewParent->vChildNodes.insert(NewParent->vChildNodes.begin(), SrcCopy);
+	Src->ParentNode = NewParent;
+	NewParent->vChildNodes.insert(NewParent->vChildNodes.begin(), Src);
 
 	SrcParentCopy->vChildNodes.erase(SrcParentCopy->vChildNodes.begin() + iSrcNode);
 }
 
-void CSyntaxTree::MoveAsTail(SSyntaxTreeNode*& Src, SSyntaxTreeNode*& NewParent)
+void CSyntaxTree::MoveAsTail(SSyntaxTreeNode* Src, SSyntaxTreeNode* NewParent)
 {
 	if (!Src || !NewParent) return;
 	if (!Src->ParentNode) return;
 
-	SSyntaxTreeNode* SrcParentCopy{ Src->ParentNode };
-	SSyntaxTreeNode* SrcCopy{ Src };
-
 	bool bFound{ false };
 	size_t iSrcNode{};
-	for (iSrcNode = 0; iSrcNode < SrcParentCopy->vChildNodes.size(); ++iSrcNode)
+	for (iSrcNode = 0; iSrcNode < Src->ParentNode->vChildNodes.size(); ++iSrcNode)
 	{
-		if (SrcParentCopy->vChildNodes[iSrcNode] == Src)
+		if (Src->ParentNode->vChildNodes[iSrcNode] == Src)
 		{
 			bFound = true;
 			break;
@@ -94,23 +92,26 @@ void CSyntaxTree::MoveAsTail(SSyntaxTreeNode*& Src, SSyntaxTreeNode*& NewParent)
 	}
 	assert(bFound);
 
-	SrcCopy->ParentNode = NewParent;
-	NewParent->vChildNodes.emplace_back(SrcCopy);
-
-	SrcParentCopy->vChildNodes.erase(SrcParentCopy->vChildNodes.begin() + iSrcNode);
+	Src->ParentNode->vChildNodes.erase(Src->ParentNode->vChildNodes.begin() + iSrcNode);
+	
+	Src->ParentNode = NewParent;
+	NewParent->vChildNodes.emplace_back(Src);
 }
 
-void CSyntaxTree::Substitute(SSyntaxTreeNode*& Src, SSyntaxTreeNode* Dest)
+// Parent by Child
+void CSyntaxTree::SubstituteParentByChild(SSyntaxTreeNode*& Node, size_t ChildIndex)
 {
-	if (!Src || !Dest) return;
+	if (!Node || (ChildIndex >= Node->vChildNodes.size())) return;
 
-	Src->ParentNode = Dest->ParentNode;
+	SSyntaxTreeNode* ChildCopy{ Node->vChildNodes[ChildIndex] };
+	Node->vChildNodes.clear();
+	ChildCopy->ParentNode = Node->ParentNode;
 
 	bool bFound{ false };
-	size_t iDestNode{};
-	for (iDestNode = 0; iDestNode < Dest->ParentNode->vChildNodes.size(); ++iDestNode)
+	size_t iNode{};
+	for (iNode = 0; iNode < Node->ParentNode->vChildNodes.size(); ++iNode)
 	{
-		if (Dest->ParentNode->vChildNodes[iDestNode] == Dest)
+		if (Node->ParentNode->vChildNodes[iNode] == Node)
 		{
 			bFound = true;
 			break;
@@ -118,11 +119,9 @@ void CSyntaxTree::Substitute(SSyntaxTreeNode*& Src, SSyntaxTreeNode* Dest)
 	}
 	assert(bFound);
 
-	Dest->ParentNode->vChildNodes[iDestNode] = Src; // @important
-	
-	Dest->vChildNodes.clear();
-	delete Dest;
-	Dest = nullptr;
+	delete Node;
+
+	Node = ChildCopy;
 }
 
 void CSyntaxTree::Substitute(const SSyntaxTreeNode& NewNode, SSyntaxTreeNode*& Dest)
@@ -132,29 +131,24 @@ void CSyntaxTree::Substitute(const SSyntaxTreeNode& NewNode, SSyntaxTreeNode*& D
 	Dest->eType = NewNode.eType;
 	Dest->Identifier = NewNode.Identifier;
 	
-	for (auto& ChildNode : Dest->vChildNodes)
+	for (auto& DestChild : Dest->vChildNodes)
 	{
-		delete ChildNode;
-		ChildNode = nullptr;
+		delete DestChild;
+		DestChild = nullptr;
 	}
-	
 	Dest->vChildNodes.clear();
-
-	for (const auto& NewChildNode : NewNode.vChildNodes)
-	{
-		Dest->vChildNodes.emplace_back(NewChildNode);
-	}
 }
 
-void CSyntaxTree::Remove(SSyntaxTreeNode* Node)
+void CSyntaxTree::Remove(SSyntaxTreeNode*& Node)
 {
 	if (!Node) return;
 
+	SSyntaxTreeNode* ParentCopy{ Node->ParentNode };
 	bool bFound{ false };
-	size_t iDestNode{};
-	for (iDestNode = 0; iDestNode < Node->ParentNode->vChildNodes.size(); ++iDestNode)
+	size_t iNode{};
+	for (iNode = 0; iNode < ParentCopy->vChildNodes.size(); ++iNode)
 	{
-		if (Node->ParentNode->vChildNodes[iDestNode] == Node)
+		if (ParentCopy->vChildNodes[iNode] == Node)
 		{
 			bFound = true;
 			break;
@@ -162,10 +156,9 @@ void CSyntaxTree::Remove(SSyntaxTreeNode* Node)
 	}
 	assert(bFound);
 
-	Node->ParentNode->vChildNodes.erase(Node->ParentNode->vChildNodes.begin() + iDestNode);
-
 	delete Node;
 	Node = nullptr;
+	ParentCopy->vChildNodes.erase(ParentCopy->vChildNodes.begin() + iNode);
 }
 
 void CSyntaxTree::Create(const SSyntaxTreeNode& RootNode)
@@ -192,7 +185,7 @@ void CSyntaxTree::Destroy()
 	}
 }
 
-void CSyntaxTree::_CopyFrom(SSyntaxTreeNode*& DestNode, SSyntaxTreeNode* DestParentNode, const SSyntaxTreeNode* const SrcNode)
+void CSyntaxTree::_CopyFrom(SSyntaxTreeNode*& DestNode, SSyntaxTreeNode* const DestParentNode, const SSyntaxTreeNode* const SrcNode)
 {
 	if (!SrcNode) return;
 
@@ -200,20 +193,19 @@ void CSyntaxTree::_CopyFrom(SSyntaxTreeNode*& DestNode, SSyntaxTreeNode* DestPar
 
 	DestNode = new SSyntaxTreeNode(*SrcNode);
 	DestNode->ParentNode = DestParentNode;
-	DestNode->vChildNodes.clear();
+	DestNode->vChildNodes.clear(); // @important
 
-	for (const auto& ChildNode : SrcNode->vChildNodes)
+	for (const auto& SrcChild : SrcNode->vChildNodes)
 	{
 		DestNode->vChildNodes.emplace_back();
 
-		_CopyFrom(DestNode->vChildNodes.back(), DestNode, ChildNode);
+		_CopyFrom(DestNode->vChildNodes.back(), DestNode, SrcChild);
 	}
 }
 
 void CSyntaxTree::InsertChild(const SSyntaxTreeNode& Content)
 {
 	SSyntaxTreeNode* NewNode{ new SSyntaxTreeNode(Content) };
-
 	NewNode->ParentNode = m_PtrCurrentNode; // @important
 
 	m_PtrCurrentNode->vChildNodes.emplace_back(NewNode);
@@ -221,12 +213,9 @@ void CSyntaxTree::InsertChild(const SSyntaxTreeNode& Content)
 
 void CSyntaxTree::GoToLastChild()
 {
-	if (m_PtrCurrentNode)
+	if (m_PtrCurrentNode && m_PtrCurrentNode->vChildNodes.size())
 	{
-		if (m_PtrCurrentNode->vChildNodes.size())
-		{
-			m_PtrCurrentNode = m_PtrCurrentNode->vChildNodes.back();
-		}
+		m_PtrCurrentNode = m_PtrCurrentNode->vChildNodes.back();
 	}
 }
 

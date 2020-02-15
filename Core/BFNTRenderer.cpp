@@ -10,7 +10,6 @@ using std::string;
 using std::make_unique;
 
 #define SAFE_DELETE(a) if (a) { delete a; a = nullptr; }
-#define SAFE_RELEASE(a) if (a) { a->Release(); a = nullptr; }
 
 CBFNTRenderer::CBFNTRenderer(ID3D11Device* const PtrDevice, ID3D11DeviceContext* const PtrDeviceContext) :
 	m_PtrDevice{ PtrDevice }, m_PtrDeviceContext{ PtrDeviceContext }
@@ -31,7 +30,7 @@ void CBFNTRenderer::Create(const std::string& BFNT_FileName, const DirectX::XMFL
 	string _BFNT_FileName{ BFNT_FileName };
 	for (auto& ch : _BFNT_FileName)
 	{
-		if (ch == '//') ch = '\\';
+		if (ch == '/') ch = '\\';
 	}
 
 	string Dir{ _BFNT_FileName };
@@ -66,7 +65,6 @@ void CBFNTRenderer::Create(const std::string& BFNT_FileName, const DirectX::XMFL
 		m_FontTexture->CreateTextureFromFile(Dir + FileNameOnly + ".png", false);
 
 		m_WindowSize = WindowSize;
-		m_CBSpaceData.ProjectionMatrix = XMMatrixOrthographicLH(m_WindowSize.x, m_WindowSize.y, 0.0f, 1.0f);
 
 		m_VSFont = new CShader(m_PtrDevice, m_PtrDeviceContext);
 		m_VSFont->Create(EShaderType::VertexShader, CShader::EVersion::_4_0, true, L"Shader\\VSFont.hlsl", "main",
@@ -75,10 +73,13 @@ void CBFNTRenderer::Create(const std::string& BFNT_FileName, const DirectX::XMFL
 		m_PSFont = new CShader(m_PtrDevice, m_PtrDeviceContext);
 		m_PSFont->Create(EShaderType::PixelShader, CShader::EVersion::_4_0, true, L"Shader\\PSFont.hlsl", "main");
 
-		m_CBSpace = new CConstantBuffer(m_PtrDevice, m_PtrDeviceContext, &m_CBSpaceData, sizeof(m_CBSpaceData));
+		m_CBSpaceData = new SCBSpaceData();
+		m_CBSpaceData->ProjectionMatrix = XMMatrixOrthographicLH(m_WindowSize.x, m_WindowSize.y, 0.0f, 1.0f);
+		m_CBSpace = new CConstantBuffer(m_PtrDevice, m_PtrDeviceContext, m_CBSpaceData, sizeof(SCBSpaceData));
 		m_CBSpace->Create();
 
-		m_CBColor = new CConstantBuffer(m_PtrDevice, m_PtrDeviceContext, &m_CBColorData, sizeof(m_CBColorData));
+		m_CBColorData = new XMFLOAT4(1, 1, 1, 1);
+		m_CBColor = new CConstantBuffer(m_PtrDevice, m_PtrDeviceContext, m_CBColorData, sizeof(XMFLOAT4));
 		m_CBColor->Create();
 
 		m_CommonStates = new CommonStates(m_PtrDevice);
@@ -102,14 +103,15 @@ void CBFNTRenderer::Create(const CBFNTRenderer* const FontRenderer)
 		m_FontTexture = FontRenderer->m_FontTexture;
 
 		m_WindowSize = FontRenderer->m_WindowSize;
-		m_CBSpaceData.ProjectionMatrix = XMMatrixOrthographicLH(m_WindowSize.x, m_WindowSize.y, 0.0f, 1.0f);
 
 		m_VSFont = FontRenderer->m_VSFont;
 
 		m_PSFont = FontRenderer->m_PSFont;
 
+		m_CBSpaceData = FontRenderer->m_CBSpaceData;
 		m_CBSpace = FontRenderer->m_CBSpace;
 
+		m_CBColorData = FontRenderer->m_CBColorData;
 		m_CBColor = FontRenderer->m_CBColor;
 
 		m_CommonStates = FontRenderer->m_CommonStates;
@@ -136,8 +138,7 @@ void CBFNTRenderer::CreateBuffers()
 		D3D11_SUBRESOURCE_DATA SubresourceData{};
 		SubresourceData.pSysMem = &m_vGlyphVertices[0];
 
-		SAFE_RELEASE(m_VertexBuffer);
-		m_PtrDevice->CreateBuffer(&BufferDesc, &SubresourceData, &m_VertexBuffer);
+		assert(SUCCEEDED(m_PtrDevice->CreateBuffer(&BufferDesc, &SubresourceData, m_VertexBuffer.ReleaseAndGetAddressOf())));
 	}
 
 	// Index buffer
@@ -153,8 +154,7 @@ void CBFNTRenderer::CreateBuffers()
 		D3D11_SUBRESOURCE_DATA SubresourceData{};
 		SubresourceData.pSysMem = &m_vGlyphIndices[0];
 
-		SAFE_RELEASE(m_IndexBuffer);
-		m_PtrDevice->CreateBuffer(&BufferDesc, &SubresourceData, &m_IndexBuffer);
+		assert(SUCCEEDED(m_PtrDevice->CreateBuffer(&BufferDesc, &SubresourceData, m_IndexBuffer.ReleaseAndGetAddressOf())));
 	}
 }
 
@@ -166,32 +166,31 @@ void CBFNTRenderer::UpdateBuffers()
 	D3D11_MAPPED_SUBRESOURCE MappedSubresource{};
 
 	// Vertex buffer
-	if (SUCCEEDED(m_PtrDeviceContext->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedSubresource)))
+	if (SUCCEEDED(m_PtrDeviceContext->Map(m_VertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedSubresource)))
 	{
 		memcpy(MappedSubresource.pData, &m_vGlyphVertices[0], sizeof(SVertex) * 4 * GlyphCount);
-		m_PtrDeviceContext->Unmap(m_VertexBuffer, 0);
+		m_PtrDeviceContext->Unmap(m_VertexBuffer.Get(), 0);
 	}
 
 	// Index buffer
-	if (SUCCEEDED(m_PtrDeviceContext->Map(m_IndexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedSubresource)))
+	if (SUCCEEDED(m_PtrDeviceContext->Map(m_IndexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedSubresource)))
 	{
 		memcpy(MappedSubresource.pData, &m_vGlyphIndices[0], sizeof(UINT) * 6 * GlyphCount);
-		m_PtrDeviceContext->Unmap(m_IndexBuffer, 0);
+		m_PtrDeviceContext->Unmap(m_IndexBuffer.Get(), 0);
 	}
 }
 
 void CBFNTRenderer::ReleaseResources()
 {
-	SAFE_RELEASE(m_VertexBuffer);
-	SAFE_RELEASE(m_IndexBuffer);
-
 	if (m_bHasOwnData)
 	{
 		SAFE_DELETE(m_BFNTLoader);
 		SAFE_DELETE(m_FontTexture);
 		SAFE_DELETE(m_VSFont);
 		SAFE_DELETE(m_PSFont);
+		SAFE_DELETE(m_CBSpaceData);
 		SAFE_DELETE(m_CBSpace);
+		SAFE_DELETE(m_CBColorData);
 		SAFE_DELETE(m_CBColor);
 		SAFE_DELETE(m_CommonStates);
 	}
@@ -205,6 +204,38 @@ void CBFNTRenderer::SetVSConstantBufferSlot(UINT Slot)
 void CBFNTRenderer::SetPSConstantBufferSlot(UINT Slot)
 {
 	m_CBColorSlot = Slot;
+}
+
+const SBFNTData& CBFNTRenderer::GetData() const
+{
+	return m_BFNTLoader->GetData();
+}
+
+size_t CBFNTRenderer::CalculateStringWidth(const char* UTF8String)
+{
+	size_t Hash{ std::hash<const char*>{}(UTF8String) };
+	if (Hash != m_PrevWidthHash)
+	{
+		m_PrevWidthHash = Hash;
+		m_PrevStringWidth = 0;
+
+		const auto& Data{ m_BFNTLoader->GetData() };
+		const auto& GlyphIDToIndexMap{ Data.umapGlyphIDtoIndex };
+		size_t BufferAt{};
+		size_t BufferSize{ strlen(UTF8String) };
+		while (BufferAt < BufferSize)
+		{
+			size_t ByteCount{ GetUTF8CharacterByteCount(UTF8String[BufferAt]) };
+			UUTF8_ID UTF8{};
+			memcpy(UTF8.Chars, &UTF8String[BufferAt], ByteCount);
+
+			size_t GlyphIndex{ (GlyphIDToIndexMap.find(UTF8.ID) != GlyphIDToIndexMap.end()) ? GlyphIDToIndexMap.at(UTF8.ID) : 0 };
+			m_PrevStringWidth += Data.vGlyphs[GlyphIndex].XAdvance;
+
+			BufferAt += ByteCount;
+		}
+	}
+	return m_PrevStringWidth;
 }
 
 void CBFNTRenderer::PushGlyph(size_t BufferCharIndex, size_t GlyphIndex, int32_t& CursorX, int32_t CursorY)
@@ -237,12 +268,13 @@ void CBFNTRenderer::PushGlyph(size_t BufferCharIndex, size_t GlyphIndex, int32_t
 void CBFNTRenderer::RenderString(const char* UTF8String, const DirectX::XMFLOAT2& Position, const DirectX::XMFLOAT4& Color)
 {
 	assert(UTF8String);
+	if (IsEmptyString(UTF8String)) return;
 
 	size_t Hash{ std::hash<const char*>{}(UTF8String) };
-	if (Hash != m_PrevHash)
+	if (Hash != m_PrevRenderingHash)
 	{
-		m_PrevHash = Hash;
-
+		m_PrevRenderingHash = Hash;
+		
 		size_t Length{ GetUTF8StringLength(UTF8String) };
 		m_vGlyphVertices.resize(Length * 4);
 		m_vGlyphIndices.resize(Length * 6);
@@ -270,11 +302,11 @@ void CBFNTRenderer::RenderString(const char* UTF8String, const DirectX::XMFLOAT2
 		UpdateStringCapacity();
 	}
 
-	m_CBSpaceData.Position.x = Position.x;
-	m_CBSpaceData.Position.y = Position.y;
+	m_CBSpaceData->Position.x = Position.x;
+	m_CBSpaceData->Position.y = Position.y;
 	m_CBSpace->Update();
 
-	m_CBColorData = Color;
+	*m_CBColorData = Color;
 	m_CBColor->Update();
 
 	Render();
@@ -294,8 +326,8 @@ void CBFNTRenderer::Render()
 	m_PtrDeviceContext->PSSetSamplers(0, 1, Samplers);
 
 	m_PtrDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	m_PtrDeviceContext->IASetVertexBuffers(0, 1, &m_VertexBuffer, &m_VertexBufferStride, &m_VertexBufferOffset);
-	m_PtrDeviceContext->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	m_PtrDeviceContext->IASetVertexBuffers(0, 1, m_VertexBuffer.GetAddressOf(), &m_VertexBufferStride, &m_VertexBufferOffset);
+	m_PtrDeviceContext->IASetIndexBuffer(m_IndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
 	m_PtrDeviceContext->DrawIndexed(static_cast<UINT>(m_vGlyphIndices.size()), 0, 0);
 }

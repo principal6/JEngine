@@ -107,7 +107,7 @@ void CPattern::Load(const char* FileName)
 		Analyzer.AddLiteral("9*");
 		Analyzer.AddLiteral("true");
 		Analyzer.AddLiteral("false");
-		
+
 		Analyzer.AddOperator(",");
 
 		Analyzer.AddOperator("(");
@@ -138,12 +138,13 @@ void CPattern::Load(const char* FileName)
 
 		Analyzer.Analyze(Tokenizer.GetTokens());
 	}
-	
+
 	const auto& Serialized{ Analyzer.Serialize() };
-	auto& RootNode{ Analyzer.GetRootNode() };
+	const auto& RootNode{ Analyzer.GetRootNode() };
 
 	m_SyntaxTree = make_unique<CSyntaxTree>();
 	m_SyntaxTree->CopyFrom(RootNode);
+
 	m_InstructionSyntaxTree = make_unique<CSyntaxTree>();
 	m_umapStateNameToID.clear();
 	for (const auto& StateNode : m_SyntaxTree->GetRootNode()->vChildNodes)

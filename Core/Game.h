@@ -368,8 +368,8 @@ public:
 	};
 
 public:
-	CGame(HINSTANCE hInstance, const XMFLOAT2& WindowSize) : m_hInstance{ hInstance }, m_WindowSize{ WindowSize } {}
-	~CGame() {}
+	CGame(HINSTANCE hInstance, const XMFLOAT2& WindowSize);
+	~CGame();
 
 public:
 	void CreateWin32(WNDPROC const WndProc, const std::string& WindowName, bool bWindowed);
@@ -865,11 +865,12 @@ private:
 	CCamera*								m_PtrPlayerCamera{};
 	std::unique_ptr<CObject3D>				m_CameraRep{};
 
+
 // BFNT renderer
 private:
 	CDynamicPool<CBFNTRenderer>					m_BFNTRendererPool{};
 	std::unique_ptr<CBFNTRenderer>				m_BFNT_Identifiers{};
-	std::vector<std::unique_ptr<CBFNTRenderer>>	m_vBFNTRenderers_Identifier{};
+	//std::vector<std::unique_ptr<CBFNTRenderer>>	m_vBFNTRenderers_Identifier{};
 
 // Scene testing
 private:

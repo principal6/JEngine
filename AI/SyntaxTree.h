@@ -41,16 +41,17 @@ class CSyntaxTree
 {
 public:
 	CSyntaxTree();
+	CSyntaxTree(const CSyntaxTree& b) = delete;
 	~CSyntaxTree();
 	
 public:
-	static void MoveChildrenAsHead(SSyntaxTreeNode*& From, SSyntaxTreeNode*& To);
-	static void MoveChildrenAsTail(SSyntaxTreeNode*& From, SSyntaxTreeNode*& To);
+	static void MoveChildrenAsHead(SSyntaxTreeNode*& Src, SSyntaxTreeNode*& Dest);
+	static void MoveChildrenAsTail(SSyntaxTreeNode*& Src, SSyntaxTreeNode*& Dest);
 	static void MoveAsHead(SSyntaxTreeNode*& Src, SSyntaxTreeNode*& NewParent);
-	static void MoveAsTail(SSyntaxTreeNode*& Src, SSyntaxTreeNode*& NewParent);
-	static void Substitute(SSyntaxTreeNode*& Src, SSyntaxTreeNode* Dest);
+	static void MoveAsTail(SSyntaxTreeNode* Src, SSyntaxTreeNode* NewParent);
+	static void SubstituteParentByChild(SSyntaxTreeNode*& Parent, size_t ChildIndex);
 	static void Substitute(const SSyntaxTreeNode& NewNode, SSyntaxTreeNode*& Dest);
-	static void Remove(SSyntaxTreeNode* Node);
+	static void Remove(SSyntaxTreeNode*& Node);
 
 public:
 	void Create(const SSyntaxTreeNode& RootNode);
@@ -58,7 +59,7 @@ public:
 	void Destroy();
 
 private:
-	void _CopyFrom(SSyntaxTreeNode*& DestNode, SSyntaxTreeNode* DestParentNode, const SSyntaxTreeNode* const SrcNode);
+	void _CopyFrom(SSyntaxTreeNode*& DestNode, SSyntaxTreeNode* const DestParentNode, const SSyntaxTreeNode* const SrcNode);
 
 public:
 	void InsertChild(const SSyntaxTreeNode& Content);

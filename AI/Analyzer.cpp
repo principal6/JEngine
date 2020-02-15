@@ -43,7 +43,7 @@ void CAnalyzer::Analyze(const std::vector<std::string>& vTokens)
 	OrganizeDeclarationNodes(m_SyntaxTree->GetRootNode(), "real");
 	OrganizeAssignmentNodes(m_SyntaxTree->GetRootNode());
 
-
+	
 	OrganizeBinaryOperatorNodes(m_SyntaxTree->GetRootNode(), "*");
 	OrganizeBinaryOperatorNodes(m_SyntaxTree->GetRootNode(), "/");
 	OrganizeBinaryOperatorNodes(m_SyntaxTree->GetRootNode(), "+");
@@ -155,6 +155,10 @@ void CAnalyzer::MakeGroupingNodes(SSyntaxTreeNode*& CurrentNode, const std::stri
 			{
 				CSyntaxTree::MoveAsTail(CurrentNode->vChildNodes[iOpenNode + 1], OpenNode);
 			}
+
+			// @important: don't forget to delete...
+			delete CurrentNode->vChildNodes[iOpenNode + 1];
+			CurrentNode->vChildNodes[iOpenNode + 1] = nullptr;
 			CurrentNode->vChildNodes.erase(CurrentNode->vChildNodes.begin() + iOpenNode + 1);
 		}
 
@@ -189,7 +193,7 @@ void CAnalyzer::RemoveUnnecessaryGroupingNodes(SSyntaxTreeNode*& CurrentNode)
 					GroupingNode->vChildNodes[0]->eType = SSyntaxTreeNode::EType::Literal;
 				}
 
-				CSyntaxTree::Substitute(GroupingNode->vChildNodes[0], GroupingNode);
+				CSyntaxTree::SubstituteParentByChild(GroupingNode, 0);
 			}
 		}
 		else
@@ -249,6 +253,9 @@ void CAnalyzer::OrganizeFunctionNodes(SSyntaxTreeNode*& CurrentNode)
 			{
 				if (ParenthesesNode->vChildNodes[iArgumentNode]->Identifier == ",")
 				{
+					// @important: don't forget to delete
+					delete ParenthesesNode->vChildNodes[iArgumentNode];
+					ParenthesesNode->vChildNodes[iArgumentNode] = nullptr;
 					ParenthesesNode->vChildNodes.erase(ParenthesesNode->vChildNodes.begin() + iArgumentNode);
 				}
 				else
@@ -261,6 +268,10 @@ void CAnalyzer::OrganizeFunctionNodes(SSyntaxTreeNode*& CurrentNode)
 				ParenthesesNode->vChildNodes.emplace_back(new SSyntaxTreeNode("void", SSyntaxTreeNode::EType::Directive, ParenthesesNode));
 			}
 			CSyntaxTree::MoveChildrenAsTail(ParenthesesNode, IdentifierNode);
+
+			// @important: don't forget to delete
+			delete CurrentNode->vChildNodes[iChild + 1];
+			CurrentNode->vChildNodes[iChild + 1] = nullptr;
 			CurrentNode->vChildNodes.erase(CurrentNode->vChildNodes.begin() + iChild + 1);
 		}
 		else
@@ -469,6 +480,9 @@ void CAnalyzer::RemovePunctuator(SSyntaxTreeNode*& CurrentNode, const std::strin
 		SSyntaxTreeNode*& ChildNode{ CurrentNode->vChildNodes[iChild] };
 		if (ChildNode->Identifier == Punctuator)
 		{
+			// @important: don't forget to delete...
+			delete ChildNode;
+			ChildNode = nullptr;
 			CurrentNode->vChildNodes.erase(CurrentNode->vChildNodes.begin() + iChild);
 		}
 		else

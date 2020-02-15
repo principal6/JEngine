@@ -40,6 +40,9 @@
     <Filter Include="stb">
       <UniqueIdentifier>{7c109f9c-9111-4124-b8ce-c297b9dfd153}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GUI">
+      <UniqueIdentifier>{551bd212-5229-4607-8169-4c2454e6cfd4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Shader.cpp">
@@ -156,6 +159,18 @@
     </ClCompile>
     <ClCompile Include="Core\BFNTRenderer.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Widget.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Internal2D.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\GUIBase.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\GUI.cpp">
+      <Filter>GUI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -597,6 +612,24 @@
     <ClInclude Include="Core\DynamicPool.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="GUI\CommonTypes.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\DynamicPoolDX11.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Widget.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Internal2D.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\GUIBase.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\GUI.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="DirectXTK\DirectXTK.lib">
@@ -702,6 +735,9 @@
     </None>
     <None Include="Shader\iFont.hlsli">
       <Filter>Shader</Filter>
+    </None>
+    <None Include="GUI\iHeader.hlsli">
+      <Filter>GUI</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -854,6 +890,12 @@
     </FxCompile>
     <FxCompile Include="Shader\PSFont.hlsl">
       <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="GUI\VS.hlsl">
+      <Filter>GUI</Filter>
+    </FxCompile>
+    <FxCompile Include="GUI\PS.hlsl">
+      <Filter>GUI</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

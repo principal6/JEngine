@@ -1,9 +1,11 @@
-#include <thread>
-#include <filesystem>
-
 #include "Game.h"
 #include "BinaryData.h"
 #include "FileDialog.h"
+
+#include <thread>
+#include <filesystem>
+
+//#define _CRTDBG_MAP_ALLOC
 
 using std::max;
 using std::min;
@@ -17,6 +19,14 @@ using std::to_wstring;
 using std::stof;
 using std::make_unique;
 using std::swap;
+
+CGame::CGame(HINSTANCE hInstance, const XMFLOAT2& WindowSize) : m_hInstance{ hInstance }, m_WindowSize{ WindowSize }
+{
+}
+
+CGame::~CGame()
+{
+}
 
 void CGame::CreateWin32(WNDPROC const WndProc, const std::string& WindowName, bool bWindowed)
 {
@@ -320,7 +330,7 @@ void CGame::InitializeImGui(const std::string& FontFileName, float FontSize)
 	ImGui::StyleColorsDark();
 	ImGui_ImplWin32_Init(m_hWnd);
 	ImGui_ImplDX11_Init(m_Device.Get(), m_DeviceContext.Get());
-
+	
 	ImGuiIO& igIO{ ImGui::GetIO() };
 	igIO.Fonts->AddFontDefault();
 	
@@ -3344,7 +3354,7 @@ void CGame::CastPickingRay()
 {
 	float NormalizedX{ m_CapturedMouseState.x / (m_WindowSize.x / 2.0f) - 1.0f };
 	float NormalizedY{ -(m_CapturedMouseState.y / (m_WindowSize.y / 2.0f) - 1.0f) };
-
+	
 	float ViewSpaceRayDirectionX{ NormalizedX / XMVectorGetX(m_MatrixProjection.r[0]) };
 	float ViewSpaceRayDirectionY{ NormalizedY / XMVectorGetY(m_MatrixProjection.r[1]) };
 	static float ViewSpaceRayDirectionZ{ 1.0f };
@@ -3787,6 +3797,8 @@ void CGame::BeginRendering(const FLOAT* ClearColor)
 	if (m_IrradianceTexture) m_IrradianceTexture->Use();
 	if (m_PrefilteredRadianceTexture) m_PrefilteredRadianceTexture->Use();
 	if (m_IntegratedBRDFTexture) m_IntegratedBRDFTexture->Use();
+
+	m_CBSpace->Use(EShaderType::VertexShader, 0);
 }
 
 void CGame::Update()

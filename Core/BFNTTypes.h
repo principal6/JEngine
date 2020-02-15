@@ -26,6 +26,7 @@ struct SBFNTData
 	std::string								FamilyName{};
 	uint32_t								FontSize{};
 	uint32_t								LineHeight{};
+	int32_t									UnderlinePosition{};
 	uint32_t								TextureWidth{};
 	uint32_t								TextureHeight{};
 	std::vector<SGlyphMetrics>				vGlyphs{};

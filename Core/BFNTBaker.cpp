@@ -32,7 +32,7 @@ void CBFNTBaker::BakeFont(const char* FontFileName, uint32_t FontSize, const cha
 	string _FontFileName{ FontFileName };
 	for (auto& ch : _FontFileName)
 	{
-		if (ch == '//') ch = '\\';
+		if (ch == '/') ch = '\\';
 	}
 
 	string Dir{ _FontFileName };
@@ -57,6 +57,16 @@ void CBFNTBaker::BakeFont(const char* FontFileName, uint32_t FontSize, const cha
 		}
 	}
 
+	string _OutDirectory{ OutDirectory };
+	if (_OutDirectory.size())
+	{
+		for (auto& ch : _OutDirectory)
+		{
+			if (ch == '/') ch = '\\';
+		}
+		if (_OutDirectory.back() != '\\') _OutDirectory += '\\';
+	}
+
 	FT_Library ftLibrary{};
 	FT_Face ftFace{};
 
@@ -69,7 +79,7 @@ void CBFNTBaker::BakeFont(const char* FontFileName, uint32_t FontSize, const cha
 	// @important: wchar_t
 	assert(FT_Select_Charmap(ftFace, FT_ENCODING_UNICODE) == FT_Err_Ok);
 	
-	for (wchar_t wch = 0; wch <= 'ÆR'; ++wch)
+	for (wchar_t wch = 0; wch <= L'ÆR'; ++wch)
 	{
 		assert(FT_Load_Char(ftFace, wch, FT_LOAD_RENDER) == FT_Err_Ok);
 
@@ -105,15 +115,16 @@ void CBFNTBaker::BakeFont(const char* FontFileName, uint32_t FontSize, const cha
 
 	string FontSizeSuffix{ "_" + to_string(FontSize) };
 
-	string TextureFileName{ OutDirectory + FileNameOnly + FontSizeSuffix + ".png" };
+	string TextureFileName{ _OutDirectory + FileNameOnly + FontSizeSuffix + ".png" };
 	stbi_write_png(TextureFileName.c_str(), m_Image.Width, m_Image.Height, sizeof(SPixel32), &m_Image.vPixels[0], m_Image.Width * sizeof(SPixel32));
 
-	string DataFileName{ OutDirectory + FileNameOnly + FontSizeSuffix + ".bfnt" };
+	string DataFileName{ _OutDirectory + FileNameOnly + FontSizeSuffix + ".bfnt" };
 	CBinaryData BinaryData{};
 	BinaryData.WriteString("KJW_BFNT", 8);
 	BinaryData.WriteStringWithPrefixedLength(ftFace->family_name);
 	BinaryData.WriteUint32(FontSize);
 	BinaryData.WriteUint32((ftFace->ascender - ftFace->descender) >> 6); // line height
+	BinaryData.WriteInt32(ftFace->underline_position >> 6); // underline position
 	BinaryData.WriteUint32(m_Image.Width);
 	BinaryData.WriteUint32(m_Image.Height);
 	BinaryData.WriteUint32((uint32_t)m_vGlyphData.size());

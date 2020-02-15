@@ -20,6 +20,7 @@ void CBFNTLoader::Load(const char* BFNTFileName)
 	BinaryData.ReadStringWithPrefixedLength(m_Data.FamilyName);
 	BinaryData.ReadUint32(m_Data.FontSize);
 	BinaryData.ReadUint32(m_Data.LineHeight);
+	BinaryData.ReadInt32(m_Data.UnderlinePosition);
 	BinaryData.ReadUint32(m_Data.TextureWidth);
 	BinaryData.ReadUint32(m_Data.TextureHeight);
 

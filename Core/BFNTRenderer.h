@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SharedHeader.h"
+#include "BFNTTypes.h"
 
 class CBFNTLoader;
 class CTexture;
@@ -23,7 +24,7 @@ public:
 	struct SCBSpaceData
 	{
 		XMMATRIX	ProjectionMatrix{};
-		XMFLOAT4	Position{};
+		XMFLOAT4	Position{ 0, 0, 0, 1 };
 	};
 
 public:
@@ -32,7 +33,7 @@ public:
 	~CBFNTRenderer();
 
 public:
-	void Create(const std::string& FNT_FileName, const DirectX::XMFLOAT2& WindowSize);
+	void Create(const std::string& BFNT_FileName, const DirectX::XMFLOAT2& WindowSize);
 	void Create(const CBFNTRenderer* const FontRenderer);
 
 private:
@@ -43,6 +44,10 @@ private:
 public:
 	void SetVSConstantBufferSlot(UINT Slot);
 	void SetPSConstantBufferSlot(UINT Slot);
+
+public:
+	const SBFNTData& GetData() const;
+	size_t CalculateStringWidth(const char* UTF8String);
 
 public:
 	void RenderString(const char* UTF8String, const DirectX::XMFLOAT2& Position, const DirectX::XMFLOAT4& Color);
@@ -74,12 +79,12 @@ private:
 	CTexture*						m_FontTexture{};
 	CShader*						m_VSFont{};
 	CShader*						m_PSFont{};
+	SCBSpaceData*					m_CBSpaceData{};
 	CConstantBuffer*				m_CBSpace{};
 	UINT							m_CBSpaceSlot{ KDefaultCBSpaceSlot };
-	SCBSpaceData					m_CBSpaceData{};
+	DirectX::XMFLOAT4*				m_CBColorData{};
 	CConstantBuffer*				m_CBColor{};
 	UINT							m_CBColorSlot{ KDefaultCBColorSlot };
-	DirectX::XMFLOAT4				m_CBColorData{ 1, 1, 1, 1 };
 	CommonStates*					m_CommonStates{};
 
 private:
@@ -88,12 +93,16 @@ private:
 private:
 	UINT							m_VertexBufferStride{ sizeof(SVertex) };
 	UINT							m_VertexBufferOffset{};
-	ID3D11Buffer*					m_VertexBuffer{};
-	ID3D11Buffer*					m_IndexBuffer{};
+	ComPtr<ID3D11Buffer>			m_VertexBuffer{};
+	ComPtr<ID3D11Buffer>			m_IndexBuffer{};
 
 private:
-	size_t							m_PrevHash{};
+	size_t							m_PrevRenderingHash{};
 	size_t							m_StringCapacity{ KInitialStringCapacity };
 	std::vector<SVertex>			m_vGlyphVertices{};
 	std::vector<UINT>				m_vGlyphIndices{};
+
+private:
+	size_t							m_PrevWidthHash{};
+	size_t							m_PrevStringWidth{};
 };

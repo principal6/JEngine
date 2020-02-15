@@ -155,6 +155,10 @@
     <ClCompile Include="Editor\CubemapRep.cpp" />
     <ClCompile Include="Editor\Gizmo3D.cpp" />
     <ClCompile Include="Editor\IBLBaker.cpp" />
+    <ClCompile Include="GUI\GUI.cpp" />
+    <ClCompile Include="GUI\GUIBase.cpp" />
+    <ClCompile Include="GUI\Internal2D.cpp" />
+    <ClCompile Include="GUI\Widget.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />
     <ClCompile Include="ImGui\imgui_draw.cpp" />
@@ -300,6 +304,12 @@
     <ClInclude Include="Editor\Gizmo3D.h" />
     <ClInclude Include="Editor\IBLBaker.h" />
     <ClInclude Include="FreeType\ft2build.h" />
+    <ClInclude Include="GUI\CommonTypes.h" />
+    <ClInclude Include="GUI\DynamicPoolDX11.h" />
+    <ClInclude Include="GUI\GUI.h" />
+    <ClInclude Include="GUI\GUIBase.h" />
+    <ClInclude Include="GUI\Internal2D.h" />
+    <ClInclude Include="GUI\Widget.h" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />
     <ClInclude Include="ImGui\imgui_impl_dx11.h" />
@@ -337,6 +347,7 @@
     <None Include="Assimp\vector3.inl" />
     <None Include="DirectXTex\DirectXTex.inl" />
     <None Include="DirectXTK\SimpleMath.inl" />
+    <None Include="GUI\iHeader.hlsli" />
     <None Include="Shader\Base.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
@@ -393,6 +404,19 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="GUI\PS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="GUI\VS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
     <FxCompile Include="Shader\DSBillboard.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Domain</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>

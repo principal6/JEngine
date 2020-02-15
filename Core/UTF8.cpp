@@ -42,3 +42,8 @@ size_t GetUTF8StringLength(const char* UTF8String)
 	
 	return Length;
 }
+
+bool IsEmptyString(const char* UTF8String)
+{
+	return (strlen(UTF8String) == 0) ? true : false;
+}
