@@ -374,6 +374,7 @@ public:
 public:
 	void CreateWin32(WNDPROC const WndProc, const std::string& WindowName, bool bWindowed);
 	void Destroy();
+	bool IsDestroyed() const;
 
 private:
 	void CreateWin32Window(WNDPROC const WndProc, const std::string& WindowName);
@@ -942,7 +943,7 @@ private:
 	ERasterizerState						m_eRasterizerState{ ERasterizerState::CullCounterClockwise };
 	EFlagsRendering							m_eFlagsRendering{};
 	bool									m_bIsDeferredRenderTargetsSet{ false };
-	bool									m_IsDestroyed{ false };
+	bool									m_bIsDestroyed{ false };
 	CMeshPorter								m_MeshPorter{};
 	ImFont*									m_EditorGUIFont{};
 	SEditorGUIBools							m_EditorGUIBools{};

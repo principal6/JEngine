@@ -5,8 +5,6 @@
 #include <thread>
 #include <filesystem>
 
-//#define _CRTDBG_MAP_ALLOC
-
 using std::max;
 using std::min;
 using std::vector;
@@ -26,6 +24,7 @@ CGame::CGame(HINSTANCE hInstance, const XMFLOAT2& WindowSize) : m_hInstance{ hIn
 
 CGame::~CGame()
 {
+	if (!IsDestroyed()) Destroy();
 }
 
 void CGame::CreateWin32(WNDPROC const WndProc, const std::string& WindowName, bool bWindowed)
@@ -39,17 +38,27 @@ void CGame::CreateWin32(WNDPROC const WndProc, const std::string& WindowName, bo
 	InitializeEditorAssets();
 
 	InitializeImGui("Asset\\D2Coding.ttf", 15.0f);
+
+	m_bIsDestroyed = false;
 }
 
 void CGame::Destroy()
 {
+	ImGuiIO& igIO{ ImGui::GetIO() };
+	igIO.Fonts->ClearFonts();
+
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
 	DestroyWindow(m_hWnd);
 	
-	m_IsDestroyed = true;
+	m_bIsDestroyed = true;
+}
+
+bool CGame::IsDestroyed() const
+{
+	return m_bIsDestroyed;
 }
 
 void CGame::CreateWin32Window(WNDPROC const WndProc, const std::string& WindowName)
@@ -332,7 +341,7 @@ void CGame::InitializeImGui(const std::string& FontFileName, float FontSize)
 	ImGui_ImplDX11_Init(m_Device.Get(), m_DeviceContext.Get());
 	
 	ImGuiIO& igIO{ ImGui::GetIO() };
-	igIO.Fonts->AddFontDefault();
+	//igIO.Fonts->AddFontDefault();
 	
 	m_EditorGUIFont = igIO.Fonts->AddFontFromFileTTF(FontFileName.c_str(), FontSize, nullptr, igIO.Fonts->GetGlyphRangesKorean());
 }
@@ -4061,7 +4070,7 @@ void CGame::Update()
 
 void CGame::Draw()
 {
-	if (m_IsDestroyed) return;
+	if (m_bIsDestroyed) return;
 
 	m_DeviceContext->RSSetViewports(1, &m_vViewports[0]);
 
@@ -4982,7 +4991,7 @@ void CGame::DrawEditorGUI()
 	{
 		DrawEditorGUIMenuBar();
 
-		if (m_IsDestroyed) return; // After clicking [Quit] on the menu bar
+		if (m_bIsDestroyed) return; // After clicking [Quit] on the menu bar
 
 		DrawEditorGUIWindowPropertyEditor();
 
@@ -8850,7 +8859,7 @@ const CPhysicsEngine* CGame::GetPhysicsEngine() const
 
 void CGame::EndRendering()
 {
-	if (m_IsDestroyed) return;
+	if (m_bIsDestroyed) return;
 
 	// Edge detection
 	if (m_eMode == EMode::Edit)

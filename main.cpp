@@ -33,12 +33,13 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		CGame::EFlagsRendering::DrawTerrainFoliagePlacingTexture | CGame::EFlagsRendering::TessellateTerrain | 
 		CGame::EFlagsRendering::Use3DGizmos | CGame::EFlagsRendering::UsePhysicallyBasedRendering);
 
-	//Game.CreateDynamicSky("Asset\\Sky.xml", 30.0f);
+	Game.CreateDynamicSky("Asset\\Sky.xml", 30.0f);
 	Game.CreateStaticSky(30.0f);
 
 	//Game.LoadScene("Scene\\mayan_dungeon.scene");
 	//Game.LoadScene("Scene\\ai_test.scene");
 	//Game.SetMode(CGame::EMode::Play);
+
 
 	CGUI Gui{ Game.GetDevicePtr(), Game.GetDeviceContextPtr() };
 	Gui.Create(Game.GethWnd());
@@ -103,7 +104,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 						Window->Close();
 					}
 				}
-				
 			}
 
 			Game.WalkPlayerToPickedPoint(2.75f);
