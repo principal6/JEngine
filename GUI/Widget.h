@@ -7,13 +7,22 @@
 #include "../Core/BFNTRenderer.h"
 #include "../DirectXTK/DirectXTK.h"
 
+class CShader;
+class CConstantBuffer;
+
 // Base class for Widgets
 class CWidget abstract
 {
 	friend class CGUIBase;
 
+	struct SCBSpaceData
+	{
+		DirectX::XMMATRIX Projection{};
+		DirectX::XMFLOAT4 Offset{};
+	};
+
 public:
-	CWidget(ID3D11Device* const Device, ID3D11DeviceContext* const DeviceContext, CBFNTRenderer* const BFNTRenderer);
+	CWidget(const SWidgetCtorData& CtorData);
 	CWidget(const CWidget& b) = delete;
 	virtual ~CWidget();
 
@@ -21,8 +30,11 @@ protected:
 	void _Create(EWidgetType eType, const std::string& Name, const SInt2& Size, CWidget* const Parent);
 
 public:
-	virtual void Draw() const abstract;
+	void Draw() const;
 	bool ShouldDraw() const;
+
+protected:
+	virtual void _Draw() const abstract;
 	
 protected:
 	void DrawCaption() const;
@@ -48,6 +60,7 @@ public:
 	CWidget* GetChild(const std::string& Name) const;
 	bool IsChild(const std::string& Name) const;
 	bool IsChild(CWidget* const Widget) const;
+	bool IsFocused() const;
 
 public:
 	void SetOffset(const SInt2& _Offset);
@@ -61,7 +74,8 @@ public:
 
 protected:
 	// @important: generates EEventType::Clicked
-	void UpdateState(const SInt2& MousePosition, EEventType& eEventType, bool bMouseDown, CWidget* LastMouseDownWidget, bool bIsActive);
+	void UpdateState(const SInt2& MousePosition, EEventType& eEventType, bool bMouseDown, 
+		CWidget* const LastMouseDownWidget, CWidget* const FocusedWidget);
 	virtual void _SetActive() abstract;
 	virtual void _SetInactive() abstract;
 	void SetState(EWidgetState eState);
@@ -75,6 +89,13 @@ protected:
 protected:
 	ID3D11Device*							m_PtrDevice{};
 	ID3D11DeviceContext*					m_PtrDeviceContext{};
+
+protected:
+	CShader*								m_PtrVS{};
+	CShader*								m_PtrPS{};
+	CConstantBuffer*						m_PtrCBSpace{};
+	SCBSpaceData*							m_PtrCBSpaceData{};
+	SFloat2*								m_PtrWindowSize{};
 
 protected:
 	EWidgetType								m_eType{};
@@ -107,6 +128,7 @@ protected:
 
 protected:
 	bool									m_bPrevIsActive{ false };
+	bool									m_bIsFocused{ false };
 
 protected:
 	CWidget*								m_Parent{};
@@ -121,15 +143,15 @@ class CButton final : public CWidget
 	friend class CGUIBase;
 
 public:
-	CButton(ID3D11Device* const Device, ID3D11DeviceContext* const DeviceContext, CBFNTRenderer* const BFNTRenderer);
+	CButton(const SWidgetCtorData& CtorData);
 	~CButton();
 
 protected:
 	void Create(const std::string& Name, const SInt2& Size, CWidget* const Parent);
 	void CreatePreset(const std::string& Name, const SInt2& Size, EButtonPreset ePreset, CWidget* const Parent);
 
-public:
-	void Draw() const override;
+protected:
+	void _Draw() const override;
 
 protected:
 	void _SetActive() override;
@@ -146,7 +168,7 @@ class CImage final : public CWidget
 	friend class CGUIBase;
 
 public:
-	CImage(ID3D11Device* const Device, ID3D11DeviceContext* const DeviceContext, CBFNTRenderer* const BFNTRenderer);
+	CImage(const SWidgetCtorData& CtorData);
 	~CImage();
 
 protected:
@@ -157,8 +179,8 @@ public:
 	void SetSource(ID3D11ShaderResourceView* const SRV, const SFloat4& TexCoordRange);
 	ID3D11ShaderResourceView* GetSource() const;
 
-public:
-	void Draw() const override;
+protected:
+	void _Draw() const override;
 
 protected:
 	void _SetActive() override;
@@ -175,14 +197,14 @@ class CImageButton final : public CWidget
 	friend class CGUIBase;
 
 public:
-	CImageButton(ID3D11Device* const Device, ID3D11DeviceContext* const DeviceContext, CBFNTRenderer* const BFNTRenderer);
+	CImageButton(const SWidgetCtorData& CtorData);
 	~CImageButton();
 
 protected:
 	void Create(const std::string& Name, const SInt2& Size, CWidget* const Parent);
 
-public:
-	void Draw() const override;
+protected:
+	void _Draw() const override;
 
 protected:
 	void _SetActive() override;
@@ -196,7 +218,7 @@ class CWindow final : public CWidget
 	friend class CGUIBase;
 
 public:
-	CWindow(ID3D11Device* const Device, ID3D11DeviceContext* const DeviceContext, CBFNTRenderer* const BFNTRenderer);
+	CWindow(const SWidgetCtorData& CtorData);
 	~CWindow();
 
 protected:
@@ -214,8 +236,8 @@ protected:
 public:
 	bool IsMouseOnTitleBar(const SInt2& MousePosition) const;
 
-public:
-	void Draw() const override;
+protected:
+	void _Draw() const override;
 
 protected:
 	void _SetActive() override;
@@ -237,14 +259,14 @@ class CText final : public CWidget
 	friend class CGUIBase;
 
 public:
-	CText(ID3D11Device* const Device, ID3D11DeviceContext* const DeviceContext, CBFNTRenderer* const BFNTRenderer);
+	CText(const SWidgetCtorData& CtorData);
 	~CText();
 
 protected:
 	void Create(const std::string& Name, const SInt2& Size, CWidget* const Parent);
 
-public:
-	void Draw() const override;
+protected:
+	void _Draw() const override;
 
 public:
 	void SetBackgroundColor(const SFloat4& Color);
@@ -253,4 +275,49 @@ protected:
 	void _SetActive() override;
 	void _SetInactive() override;
 	void _SetState() override;
+};
+
+// TextEdit
+class CTextEdit final : public CWidget
+{
+	friend class CGUIBase;
+
+public:
+	enum class EDirection
+	{
+		Left,
+		Right,
+		Up,
+		Down,
+		Home,
+		End,
+	};
+
+public:
+	CTextEdit(const SWidgetCtorData& CtorData);
+	~CTextEdit();
+
+private:
+	void Create(const std::string& Name, const SInt2& Size, CWidget* const Parent);
+
+protected:
+	void _Draw() const override;
+
+private:
+	void InsertChar(const std::string& UTF8_Char);
+	void MoveCaret(EDirection eDirection);
+	void DeletePreChar();
+	void DeletePostChar();
+
+private:
+	void _SetActive() override;
+	void _SetInactive() override;
+	void _SetState() override;
+
+private:
+	std::unique_ptr<CPrimitive2D>	m_CaretPrimitive{};
+	uint32_t*						m_PtrCaretBlinkTime{};
+	mutable uint32_t				m_CaretTimer{};
+	mutable uint32_t				m_PrevTimePoint_ms{};
+	uint32_t						m_CaretAt{};
 };

@@ -1,16 +1,24 @@
 #include "Widget.h"
 #include <cassert>
+#include <chrono>
+#include "../Core/UTF8.h"
+#include "../Core/Shader.h"
+#include "../Core/ConstantBuffer.h"
 
+using std::min;
 using std::make_unique;
+using std::chrono::steady_clock;
 
-CWidget::CWidget(ID3D11Device* const Device, ID3D11DeviceContext* const DeviceContext, CBFNTRenderer* const BFNTRenderer) :
-	m_PtrDevice{ Device }, m_PtrDeviceContext{ DeviceContext }
+CWidget::CWidget(const SWidgetCtorData& CtorData) :
+	m_PtrDevice{ CtorData.Device }, m_PtrDeviceContext{ CtorData.DeviceContext },
+	m_PtrVS{ CtorData.VS }, m_PtrPS{ CtorData.PS },
+	m_PtrCBSpace{ CtorData.CBSpace }, m_PtrCBSpaceData{ (CWidget::SCBSpaceData*)CtorData.CBSpaceData }, m_PtrWindowSize{ CtorData.WindowSize }
 {
 	assert(m_PtrDevice);
 	assert(m_PtrDeviceContext);
 
 	m_BFNTRenderer = make_unique<CBFNTRenderer>(m_PtrDevice, m_PtrDeviceContext);
-	m_BFNTRenderer->Create(BFNTRenderer);
+	m_BFNTRenderer->Create(CtorData.BFNTRenderer);
 }
 
 CWidget::~CWidget()
@@ -30,6 +38,23 @@ void CWidget::_Create(EWidgetType eType, const std::string& Name, const SInt2& S
 		m_Parent->m_vChildren.emplace_back(this);
 		m_Parent->m_umapChildNameToIndex[m_Name] = m_Parent->m_vChildren.size() - 1;
 	}
+}
+
+void CWidget::Draw() const
+{
+	m_PtrVS->Use();
+	m_PtrPS->Use();
+	m_PtrCBSpace->Use(EShaderType::VertexShader, 0);
+
+	XMFLOAT2 HalfWindowSize{ m_PtrWindowSize->X * 0.5f, m_PtrWindowSize->Y * 0.5f };
+	auto Parent{ GetParent() };
+	const auto& ParentPosition{ (Parent) ? Parent->GetPosition() : SInt2() };
+	const auto& ParentOffset{ (Parent) ? Parent->GetOffset() : SInt2() };
+	m_PtrCBSpaceData->Offset.x = -HalfWindowSize.x + (float)ParentPosition.X + (float)ParentOffset.X + (float)m_Position.X + (float)m_Offset.X;
+	m_PtrCBSpaceData->Offset.y = +HalfWindowSize.y - (float)ParentPosition.Y - (float)ParentOffset.Y - (float)m_Position.Y - (float)m_Offset.Y;
+	m_PtrCBSpace->Update();
+
+	_Draw();
 }
 
 bool CWidget::ShouldDraw() const
@@ -165,6 +190,11 @@ bool CWidget::IsChild(CWidget* const Widget) const
 	return false;
 }
 
+bool CWidget::IsFocused() const
+{
+	return m_bIsFocused;
+}
+
 void CWidget::SetOffset(const SInt2& _Offset)
 {
 	m_Offset = _Offset;
@@ -209,8 +239,12 @@ const std::string& CWidget::GetCaption() const
 	return m_Caption;
 }
 
-void CWidget::UpdateState(const SInt2& MousePosition, EEventType& eEventType, bool bMouseDown, CWidget* LastMouseDownWidget, bool bIsActive)
+void CWidget::UpdateState(const SInt2& MousePosition, EEventType& eEventType, bool bMouseDown,
+	CWidget* const LastMouseDownWidget, CWidget* const FocusedWidget)
 {
+	bool bIsActive{ (IsChild(FocusedWidget) ? true : this == FocusedWidget) };
+	m_bIsFocused = (this == FocusedWidget);
+
 	if (IsMouseInside(MousePosition))
 	{
 		// Event: Clicked
@@ -301,8 +335,7 @@ bool CWidget::IsMouseInside(const SInt2& MousePosition)
 }
 
 // CButton
-CButton::CButton(ID3D11Device* const Device, ID3D11DeviceContext* const DeviceContext, CBFNTRenderer* const BFNTRenderer) :
-	CWidget(Device, DeviceContext, BFNTRenderer)
+CButton::CButton(const SWidgetCtorData& CtorData) : CWidget(CtorData)
 {
 }
 
@@ -348,7 +381,7 @@ void CButton::CreatePreset(const std::string& Name, const SInt2& Size, EButtonPr
 	}
 }
 
-void CButton::Draw() const
+void CButton::_Draw() const
 {
 	m_Primitive2D.Draw();
 	if (m_PresetPrimitive)
@@ -380,8 +413,7 @@ void CButton::_SetState()
 }
 
 // CImage
-CImage::CImage(ID3D11Device* const Device, ID3D11DeviceContext* const DeviceContext, CBFNTRenderer* const BFNTRenderer) :
-	CWidget(Device, DeviceContext, BFNTRenderer)
+CImage::CImage(const SWidgetCtorData& CtorData) : CWidget(CtorData)
 {
 }
 
@@ -423,7 +455,7 @@ ID3D11ShaderResourceView* CImage::GetSource() const
 	return m_SRV;
 }
 
-void CImage::Draw() const
+void CImage::_Draw() const
 {
 	m_Primitive2D.Draw();
 }
@@ -441,8 +473,7 @@ void CImage::_SetState()
 }
 
 // CImageButton
-CImageButton::CImageButton(ID3D11Device* const Device, ID3D11DeviceContext* const DeviceContext, CBFNTRenderer* const BFNTRenderer) :
-	CWidget(Device, DeviceContext, BFNTRenderer)
+CImageButton::CImageButton(const SWidgetCtorData& CtorData) : CWidget(CtorData)
 {
 }
 
@@ -456,7 +487,7 @@ void CImageButton::Create(const std::string& Name, const SInt2& Size, CWidget* c
 	m_Primitive2D.CreateImage(m_Size, SFloat4(0, 0, 0, 0));
 }
 
-void CImageButton::Draw() const
+void CImageButton::_Draw() const
 {
 	m_Primitive2D.Draw();
 	DrawCaption();
@@ -484,8 +515,7 @@ void CImageButton::_SetState()
 	m_Primitive2D.UpdateBuffers();
 }
 
-CWindow::CWindow(ID3D11Device* const Device, ID3D11DeviceContext* const DeviceContext, CBFNTRenderer* const BFNTRenderer) :
-	CWidget(Device, DeviceContext, BFNTRenderer)
+CWindow::CWindow(const SWidgetCtorData& CtorData) : CWidget(CtorData)
 {
 }
 
@@ -550,7 +580,7 @@ bool CWindow::IsMouseOnTitleBar(const SInt2& MousePosition) const
 	return false;
 }
 
-void CWindow::Draw() const
+void CWindow::_Draw() const
 {
 	m_Primitive2D.Draw();
 
@@ -583,8 +613,7 @@ void CWindow::_SetState()
 {
 }
 
-CText::CText(ID3D11Device* const Device, ID3D11DeviceContext* const DeviceContext, CBFNTRenderer* const BFNTRenderer) :
-	CWidget(Device, DeviceContext, BFNTRenderer)
+CText::CText(const SWidgetCtorData& CtorData) : CWidget(CtorData)
 {
 }
 
@@ -594,11 +623,11 @@ CText::~CText()
 
 void CText::Create(const std::string& Name, const SInt2& Size, CWidget* const Parent)
 {
-	_Create(EWidgetType::ImageButton, Name, Size, Parent);
+	_Create(EWidgetType::Text, Name, Size, Parent);
 	m_Primitive2D.CreateShape(m_Size, SFloat4(0, 0, 0, 0));
 }
 
-void CText::Draw() const
+void CText::_Draw() const
 {
 	m_Primitive2D.Draw();
 	DrawCaption();
@@ -618,5 +647,173 @@ void CText::_SetInactive()
 }
 
 void CText::_SetState()
+{
+}
+
+CTextEdit::CTextEdit(const SWidgetCtorData& CtorData) : CWidget(CtorData)
+{
+}
+
+CTextEdit::~CTextEdit()
+{
+}
+
+void CTextEdit::Create(const std::string& Name, const SInt2& Size, CWidget* const Parent)
+{
+	_Create(EWidgetType::TextEdit, Name, Size, Parent);
+
+	m_Primitive2D.CreateShape(m_Size, KDefaultTextEditBackgroundColor);
+
+	const auto& FontData{ m_BFNTRenderer->GetData() };
+	m_CaretPrimitive = make_unique<CPrimitive2D>(m_PtrDevice, m_PtrDeviceContext);
+	m_CaretPrimitive->CreateLine(
+		{
+			SVertex(SFloat4(1, -1, 0, 1), KDefaultCaretColor),
+			SVertex(SFloat4(1, -1 -(float)FontData.LineHeight, 0, 1), KDefaultCaretColor),
+		}
+	);
+
+	SetCaptionAlign(EHorzAlign::Left, EVertAlign::Top);
+	SetCaptionColor(KDefaultFontColor);
+}
+
+void CTextEdit::_Draw() const
+{
+	static const steady_clock Clock{};
+
+	m_Primitive2D.Draw();
+
+	{
+		UINT OldCount{};
+		D3D11_RECT* OldRects{};
+		m_PtrDeviceContext->RSGetScissorRects(&OldCount, OldRects);
+
+		auto Parent{ GetParent() };
+		const auto& ParentPosition{ (Parent) ? Parent->GetPosition() : SInt2() };
+		const auto& ParentOffset{ (Parent) ? Parent->GetOffset() : SInt2() };
+		
+		D3D11_RECT ScissorRect{};
+		ScissorRect.top = ParentPosition.Y + ParentOffset.Y + m_Position.Y + m_Offset.Y;
+		ScissorRect.bottom = ScissorRect.top + m_Size.Y;
+		ScissorRect.left = ParentPosition.X + ParentOffset.X + m_Position.X + m_Offset.X;
+		ScissorRect.right = ScissorRect.left + m_Size.X;
+		m_PtrDeviceContext->RSSetScissorRects(1, &ScissorRect);
+
+		DrawCaption(m_Size, SInt2(1, 1));
+
+		m_PtrDeviceContext->RSSetScissorRects(OldCount, OldRects);
+	}
+
+	m_PtrVS->Use();
+	m_PtrPS->Use();
+	m_PtrCBSpace->Use(EShaderType::VertexShader, 0);
+	
+	if (m_bIsFocused)
+	{
+		uint32_t Now_ms{ (uint32_t)(Clock.now().time_since_epoch().count() / 1'000'000) };
+		if (m_PrevTimePoint_ms == 0) m_PrevTimePoint_ms = Now_ms;
+		uint32_t DeltaTime_ms{ Now_ms - m_PrevTimePoint_ms };
+
+		m_CaretTimer += DeltaTime_ms;
+		uint32_t CaretBlinkTime{ *m_PtrCaretBlinkTime };
+		if (m_CaretTimer <= CaretBlinkTime)
+		{
+			size_t ByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt) };
+			m_PtrCBSpaceData->Offset.x += m_BFNTRenderer->CalculateStringWidth(m_Caption.substr(0, ByteAt).c_str());
+			m_PtrCBSpace->Update();
+
+			m_CaretPrimitive->Draw();
+		}
+		else if (m_CaretTimer > CaretBlinkTime * 2)
+		{
+			m_CaretTimer = 0;
+		}
+
+		m_PrevTimePoint_ms = Now_ms;
+	}
+}
+
+void CTextEdit::InsertChar(const std::string& UTF8_Char)
+{
+	if (m_Caption.size())
+	{
+		size_t ByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt) };
+		std::string Pre{ m_Caption.substr(0, ByteAt) };
+		std::string Post{ m_Caption.substr(ByteAt) };
+		m_Caption = Pre + UTF8_Char + Post;
+	}
+	else
+	{
+		m_Caption = UTF8_Char;
+	}
+	MoveCaret(EDirection::Right);
+}
+
+void CTextEdit::MoveCaret(EDirection eDirection)
+{
+	if (eDirection == EDirection::Right)
+	{
+		if (m_CaretAt < GetUTF8StringLength(m_Caption.c_str()))
+		{
+			++m_CaretAt;
+			m_CaretTimer = 0;
+		}
+	}
+	else if (eDirection == EDirection::Left)
+	{
+		if (m_CaretAt > 0)
+		{
+			--m_CaretAt;
+			m_CaretTimer = 0;
+		}
+	}
+	else if (eDirection == EDirection::Home)
+	{
+		m_CaretAt = 0;
+		m_CaretTimer = 0;
+	}
+	else if (eDirection == EDirection::End)
+	{
+		m_CaretAt = (uint32_t)GetUTF8StringLength(m_Caption.c_str());
+		m_CaretTimer = 0;
+	}
+}
+
+void CTextEdit::DeletePreChar()
+{
+	if (m_CaretAt > 0)
+	{
+		size_t ByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt) };
+		size_t PreByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt - 1) };
+		std::string Pre{ m_Caption.substr(0, PreByteAt) };
+		std::string Post{ m_Caption.substr(ByteAt) };
+		m_Caption = Pre + Post;
+
+		MoveCaret(EDirection::Left);
+	}
+}
+
+void CTextEdit::DeletePostChar()
+{
+	if (m_CaretAt < GetUTF8StringLength(m_Caption.c_str()))
+	{
+		size_t ByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt) };
+		size_t PostByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt + 1) };
+		std::string Pre{ m_Caption.substr(0, ByteAt) };
+		std::string Post{ m_Caption.substr(PostByteAt) };
+		m_Caption = Pre + Post;
+	}
+}
+
+void CTextEdit::_SetActive()
+{
+	m_CaretTimer = 0;
+}
+
+void CTextEdit::_SetInactive()
+{
+}
+
+void CTextEdit::_SetState()
 {
 }

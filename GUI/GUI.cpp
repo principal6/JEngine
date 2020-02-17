@@ -85,3 +85,8 @@ bool CGUI::CreateText(const std::string& Name, const SInt2& Size, const std::str
 {
 	return _CreateText(Name, Size, Content, ParentWidget);
 }
+
+bool CGUI::CreateTextEdit(const std::string& Name, const SInt2& Size, CWidget* const ParentWidget)
+{
+	return _CreateTextEdit(Name, Size, ParentWidget);
+}

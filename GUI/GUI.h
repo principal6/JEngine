@@ -29,6 +29,7 @@ public:
 	bool CreateImageButton(EImageButtonType eType, const std::string& Name, const SInt2& Size, CWidget* const ParentWidget = nullptr);
 	bool CreateWindowWidget(EWindowType eType, const std::string& Name, CWidget* const ParentWidget = nullptr);
 	bool CreateText(const std::string& Name, const SInt2& Size, const std::string& Content, CWidget* const ParentWidget = nullptr);
+	bool CreateTextEdit(const std::string& Name, const SInt2& Size, CWidget* const ParentWidget = nullptr);
 
 private:
 

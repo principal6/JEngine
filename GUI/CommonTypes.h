@@ -34,7 +34,9 @@ enum class EWidgetType
 	Button,
 	Image,
 	ImageButton,
-	Window
+	Window,
+	Text,
+	TextEdit,
 };
 
 enum class EEventType
@@ -45,6 +47,8 @@ enum class EEventType
 	Clicked,
 	MouseMove,
 	KeyStroke,
+	KeyDown,
+	IMEComposition,
 };
 
 enum class EMouseEventType
@@ -132,6 +136,32 @@ struct SVertex
 	SFloat4 ColorTex{};
 };
 
+struct ID3D11Device;
+struct ID3D11DeviceContext;
+class CBFNTRenderer;
+class CShader;
+class CConstantBuffer;
+struct SWidgetCtorData
+{
+	SWidgetCtorData() {};
+	SWidgetCtorData(
+		ID3D11Device* const _Device, ID3D11DeviceContext* const _DeviceContext,
+		CBFNTRenderer* const _BFNTRenderer, CShader* const _VS, CShader* const _PS,
+		CConstantBuffer* const _CBSpace, void* const _CBSpaceData, SFloat2* const _WindowSize) :
+		Device{ _Device }, DeviceContext{ _DeviceContext },
+		BFNTRenderer{ _BFNTRenderer }, VS{ _VS }, PS{ _PS },
+		CBSpace{ _CBSpace }, CBSpaceData{ _CBSpaceData }, WindowSize{ _WindowSize } {};
+
+	ID3D11Device*			Device{};
+	ID3D11DeviceContext*	DeviceContext{};
+	CBFNTRenderer*			BFNTRenderer{};
+	CShader*				VS{};
+	CShader*				PS{};
+	CConstantBuffer*		CBSpace{};
+	void*					CBSpaceData{};
+	SFloat2*				WindowSize{};
+};
+
 // Default color theme
 static constexpr SFloat4 KDefaultButtonNormalColor{ 0, 0.4375f, 0.625f, 1 };
 static constexpr SFloat4 KDefaultButtonHoverColor{ 0, 0.625f, 0.875f, 1 };
@@ -139,8 +169,10 @@ static constexpr SFloat4 KDefaultButtonPressedColor{ 0, 0.75f, 0.9375f, 1 };
 static constexpr SFloat4 KDefaultTitleBarActiveColor{ 0, 0.3125f, 0.625f, 1 };
 static constexpr SFloat4 KDefaultTitleBarInactiveColor{ 0.25f, 0.5f, 0.75f, 1 };
 static constexpr SFloat4 KDefaultWindowBackgroundColor{ 0.125f, 0.1875f, 0.25f, 1 };
+static constexpr SFloat4 KDefaultTextEditBackgroundColor{ 0.0625f, 0.125f, 0.1875f, 1 };
 static constexpr SFloat4 KDefaultIconColor{ 0.875f, 1.0f, 1.0f, 1 };
 static constexpr SFloat4 KDefaultFontColor{ KDefaultIconColor };
+static constexpr SFloat4 KDefaultCaretColor{ 1.0f, 1.0f, 1.0f, 1 };
 //static constexpr float KDefaultRoundness{ 0.25f }; // relative roundness -unit: percentage
 static constexpr float KDefaultRoundness{ 6 }; // absolute roundness -unit: pixel
 static constexpr int32_t KDefaultTitleBarHeight{ 24 };

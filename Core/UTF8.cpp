@@ -43,6 +43,26 @@ size_t GetUTF8StringLength(const char* UTF8String)
 	return Length;
 }
 
+size_t ConvertStringAtToByteAt(const char* UTF8String, size_t StringAt)
+{
+	assert(UTF8String);
+
+	if (StringAt == 0) return 0;
+
+	size_t At{};
+	size_t ByteAt{};
+	size_t ByteSize{ strlen(UTF8String) };
+	while (ByteAt < ByteSize)
+	{
+		size_t ByteCount{ GetUTF8CharacterByteCount(UTF8String[ByteAt]) };
+		ByteAt += ByteCount;
+
+		++At;
+		if (StringAt == At) break;
+	}
+	return ByteAt;
+}
+
 bool IsEmptyString(const char* UTF8String)
 {
 	return (strlen(UTF8String) == 0) ? true : false;

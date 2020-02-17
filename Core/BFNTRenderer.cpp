@@ -213,7 +213,7 @@ const SBFNTData& CBFNTRenderer::GetData() const
 
 size_t CBFNTRenderer::CalculateStringWidth(const char* UTF8String)
 {
-	size_t Hash{ std::hash<const char*>{}(UTF8String) };
+	size_t Hash{ std::hash<string>{}(string(UTF8String)) };
 	if (Hash != m_PrevWidthHash)
 	{
 		m_PrevWidthHash = Hash;
@@ -270,7 +270,7 @@ void CBFNTRenderer::RenderString(const char* UTF8String, const DirectX::XMFLOAT2
 	assert(UTF8String);
 	if (IsEmptyString(UTF8String)) return;
 
-	size_t Hash{ std::hash<const char*>{}(UTF8String) };
+	size_t Hash{ std::hash<string>{}(string(UTF8String)) };
 	if (Hash != m_PrevRenderingHash)
 	{
 		m_PrevRenderingHash = Hash;

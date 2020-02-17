@@ -63,6 +63,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		Gui.CreateText("tx", SInt2(100, 30), u8"°¡³ª´Ùabc", Window);
 		CText* tx{ (CText*)Window->GetChild("tx") };
 		tx->SetBackgroundColor(SFloat4(1, 0, 0, 0.5f));
+
+		Gui.CreateTextEdit("edit", SInt2(100, 30), Window);
+		CTextEdit* edit{ (CTextEdit*)Window->GetChild("edit") };
+		edit->SetOffset(SInt2(0, 60));
 	}
 	
 	g_GUI = &Gui;
@@ -161,6 +165,8 @@ LRESULT CALLBACK WndProc(_In_ HWND hWnd, _In_ UINT Msg, _In_ WPARAM wParam, _In_
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
+	case WM_IME_CHAR: // @important
+		return 0;
 	default:
 		return DefWindowProc(hWnd, Msg, wParam, lParam);
 	}

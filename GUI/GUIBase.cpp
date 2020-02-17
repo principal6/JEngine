@@ -2,6 +2,7 @@
 #include "../Core/SharedHeader.h"
 #include "../Core/Shader.h"
 #include "../Core/ConstantBuffer.h"
+#include "../Core/UTF8.h"
 #include "../DirectXTex/DirectXTex.h"
 
 using std::string;
@@ -38,10 +39,20 @@ void CGUIBase::_Create(HWND hWnd, const std::string& BFNTFileName)
 		(float)(info.rcClient.right - info.rcClient.left),
 		(float)(info.rcClient.bottom - info.rcClient.top)
 	};
-
+	
 	m_BFNTRenderer.Create(BFNTFileName, WindowSize);
 
-	m_CaretBlinkTime = GetCaretBlinkTime();
+	m_CaretBlinkTime = ::GetCaretBlinkTime();
+
+	m_WidgetCtorData = SWidgetCtorData(m_PtrDevice, m_PtrDeviceContext, &m_BFNTRenderer, m_VS.get(), m_PS.get(), m_CBSpace.get(), &m_CBSpaceData, &m_WindowSize);
+
+	D3D11_RASTERIZER_DESC RasterizerDesc;
+	ZeroMemory(&RasterizerDesc, sizeof(RasterizerDesc));
+	RasterizerDesc.FillMode = D3D11_FILL_SOLID;
+	RasterizerDesc.CullMode = D3D11_CULL_NONE;
+	RasterizerDesc.ScissorEnable = true;
+	RasterizerDesc.DepthClipEnable = true;
+	m_PtrDevice->CreateRasterizerState(&RasterizerDesc, m_RS.ReleaseAndGetAddressOf());
 }
 
 void CGUIBase::_CreateTextureAtlas(const std::string& FileName)
@@ -67,7 +78,7 @@ void CGUIBase::_CreateTextureAtlas(const std::string& FileName)
 
 bool CGUIBase::_CreateButton(const std::string& Name, const SInt2& Size, CWidget* const ParentWidget)
 {
-	CWidget* NewButton{ new CButton(m_PtrDevice, m_PtrDeviceContext, &m_BFNTRenderer) };
+	CWidget* NewButton{ new CButton(m_WidgetCtorData) };
 	string FullName{ Name };
 	if (ParentWidget) FullName = ParentWidget->GetName() + FullName;
 	if (m_WidgetPool.Insert(FullName, NewButton))
@@ -81,7 +92,7 @@ bool CGUIBase::_CreateButton(const std::string& Name, const SInt2& Size, CWidget
 
 bool CGUIBase::_CreateButtonPreset(const std::string& Name, const SInt2& Size, EButtonPreset ePreset, CWidget* const ParentWidget)
 {
-	CWidget* NewButton{ new CButton(m_PtrDevice, m_PtrDeviceContext, &m_BFNTRenderer) };
+	CWidget* NewButton{ new CButton(m_WidgetCtorData) };
 	string FullName{ Name };
 	if (ParentWidget) FullName = ParentWidget->GetName() + FullName;
 	if (m_WidgetPool.Insert(FullName, NewButton))
@@ -105,7 +116,7 @@ bool CGUIBase::_CreateImage(const std::string& Name, const SInt2& Size, const SI
 bool CGUIBase::_CreateImage(const std::string& Name, const SInt2& Size, const SInt2& U0PixelCoord, const SInt2& SizeInTexturePixelCoord, 
 	CWidget* const ParentWidget)
 {
-	CWidget* NewImage{ new CImage(m_PtrDevice, m_PtrDeviceContext, &m_BFNTRenderer) };
+	CWidget* NewImage{ new CImage(m_WidgetCtorData) };
 	string FullName{ Name };
 	if (ParentWidget) FullName = ParentWidget->GetName() + FullName;
 	if (m_WidgetPool.Insert(FullName, NewImage))
@@ -126,7 +137,7 @@ bool CGUIBase::_CreateImage(const std::string& Name, const SInt2& Size, const SI
 
 bool CGUIBase::_CreateImageButton(const std::string& Name, const SInt2& Size, CWidget* const ParentWidget)
 {
-	CWidget* NewImageButton{ new CImageButton(m_PtrDevice, m_PtrDeviceContext, &m_BFNTRenderer) };
+	CWidget* NewImageButton{ new CImageButton(m_WidgetCtorData) };
 	string FullName{ Name };
 	if (ParentWidget) FullName = ParentWidget->GetName() + FullName;
 	if (m_WidgetPool.Insert(FullName, NewImageButton))
@@ -141,7 +152,7 @@ bool CGUIBase::_CreateWindowImage(const std::string& Name, const SInt2& Size,
 	const SInt2& U0PixelCoord, const SInt2& SizeInTexturePixelCoord, 
 	const SInt2& TitleBarOffset, const SInt2& TitleBarSize, CWidget* const ParentWidget)
 {
-	CWidget* NewWindow{ new CWindow(m_PtrDevice, m_PtrDeviceContext, &m_BFNTRenderer) };
+	CWidget* NewWindow{ new CWindow(m_WidgetCtorData) };
 	string FullName{ Name };
 	if (ParentWidget) FullName = ParentWidget->GetName() + FullName;
 	if (m_WidgetPool.Insert(FullName, NewWindow))
@@ -164,7 +175,7 @@ bool CGUIBase::_CreateWindowImage(const std::string& Name, const SInt2& Size,
 
 bool CGUIBase::_CreateWindowPrimitive(const std::string& Name, const SInt2& Size, float Roundness, CWidget* const ParentWidget)
 {
-	CWidget* NewWindow{ new CWindow(m_PtrDevice, m_PtrDeviceContext, &m_BFNTRenderer) };
+	CWidget* NewWindow{ new CWindow(m_WidgetCtorData) };
 	string FullName{ Name };
 	if (ParentWidget) FullName = ParentWidget->GetName() + FullName;
 	if (m_WidgetPool.Insert(FullName, NewWindow))
@@ -182,7 +193,7 @@ bool CGUIBase::_CreateWindowPrimitive(const std::string& Name, const SInt2& Size
 
 bool CGUIBase::_CreateText(const std::string& Name, const SInt2& Size, const std::string& Content, CWidget* const ParentWidget)
 {
-	CWidget* NewText{ new CText(m_PtrDevice, m_PtrDeviceContext, &m_BFNTRenderer) };
+	CWidget* NewText{ new CText(m_WidgetCtorData) };
 	string FullName{ Name };
 	if (ParentWidget) FullName = ParentWidget->GetName() + FullName;
 	if (m_WidgetPool.Insert(FullName, NewText))
@@ -195,11 +206,30 @@ bool CGUIBase::_CreateText(const std::string& Name, const SInt2& Size, const std
 	return false;
 }
 
+bool CGUIBase::_CreateTextEdit(const std::string& Name, const SInt2& Size, CWidget* const ParentWidget)
+{
+	CWidget* NewTextEdit{ new CTextEdit(m_WidgetCtorData) };
+	string FullName{ Name };
+	if (ParentWidget) FullName = ParentWidget->GetName() + FullName;
+	if (m_WidgetPool.Insert(FullName, NewTextEdit))
+	{
+		((CTextEdit*)NewTextEdit)->Create(Name, Size, ParentWidget);
+		((CTextEdit*)NewTextEdit)->m_PtrCaretBlinkTime = &m_CaretBlinkTime;
+		return true;
+	}
+	return false;
+}
+
 CWidget* CGUIBase::GetWidget(const std::string& Name, CWidget* const ParentWidget) const
 {
 	string FullName{ Name };
 	if (ParentWidget) FullName = ParentWidget->GetName() + FullName;
 	return m_WidgetPool.Get(FullName);
+}
+
+uint32_t CGUIBase::GetCaretBlinkTime() const
+{
+	return m_CaretBlinkTime;
 }
 
 void CGUIBase::SetWidgetStateTexCoordRange(const std::string& FullName, EWidgetState eWidgetState,
@@ -291,13 +321,45 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	case WM_INPUT:
 		break;
 	case WM_KEYDOWN:
-	case WM_SYSKEYDOWN:
-	case WM_KEYUP:
-	case WM_SYSKEYUP:
+		NewEvent.eEventType = EEventType::KeyDown;
+		NewEvent.Extra = (uint32_t)wParam;
 		break;
 	case WM_CHAR:
 		NewEvent.eEventType = EEventType::KeyStroke;
 		NewEvent.Extra = (uint32_t)wParam;
+		break;
+	case WM_IME_COMPOSITION:
+		if (lParam & GCS_COMPSTR)
+		{
+			HIMC hIMC{ ImmGetContext(hWnd) };
+			LONG len{ ImmGetCompositionString(hIMC, GCS_COMPSTR, NULL, 0) };
+			TCHAR tstr[3]{};
+			ImmGetCompositionString(hIMC, GCS_COMPSTR, tstr, len);
+			wchar_t wChar{};
+			MultiByteToWideChar(CP_ACP, 0, tstr, (int)strlen(tstr), &wChar, 1);
+			ImmReleaseContext(hWnd, hIMC);
+			NewEvent.eEventType = EEventType::IMEComposition;
+			NewEvent.Extra = wChar;
+
+			m_bIsIMECompositing = true;
+		}
+		break;
+	case WM_IME_CHAR:
+	{
+		TCHAR tstr[3]{};
+		wchar_t wChar{};
+		NewEvent.eEventType = EEventType::KeyStroke;
+		tstr[0] = HIBYTE(LOWORD(wParam));
+		tstr[1] = LOBYTE(LOWORD(wParam));
+		MultiByteToWideChar(CP_ACP, 0, tstr, (int)strlen(tstr), &wChar, 1);
+		NewEvent.Extra = wChar;
+
+		m_bIsIMECompositing = false;
+		break;
+	}
+	case WM_SYSKEYDOWN:
+	case WM_KEYUP:
+	case WM_SYSKEYUP:
 		break;
 	default:
 		break;
@@ -312,8 +374,74 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	for (const auto& Name : Names)
 	{
 		auto Widget{ m_WidgetPool.Get(Name) };
-		bool bIsActive{ (Widget->IsChild(m_FocusedWidget) ? true : Widget == m_FocusedWidget) };
-		Widget->UpdateState(MousePosition, NewEvent.eEventType, m_bMouseDown, m_LastMouseDownWidget, bIsActive);
+		Widget->UpdateState(MousePosition, NewEvent.eEventType, m_bMouseDown, m_LastMouseDownWidget, m_FocusedWidget);
+
+		if (NewEvent.eEventType == EEventType::KeyStroke || 
+			NewEvent.eEventType == EEventType::KeyDown ||
+			NewEvent.eEventType == EEventType::IMEComposition)
+		{
+			if (Widget->GetType() == EWidgetType::TextEdit && Widget->IsFocused())
+			{
+				CTextEdit* const TextEdit{ (CTextEdit*)Widget };
+				if (NewEvent.eEventType == EEventType::IMEComposition)
+				{
+					if (!m_bIsIMECompositingPrev && m_bIsIMECompositing)
+					{
+						wchar_t wChar{ (wchar_t)NewEvent.Extra };
+						UUTF8_ID utf8{ ConvertToUTF8(wChar) };
+						TextEdit->InsertChar(utf8.Chars);
+					}
+					else if (m_bIsIMECompositingPrev && m_bIsIMECompositing)
+					{
+						TextEdit->DeletePreChar();
+						wchar_t wChar{ (wchar_t)NewEvent.Extra };
+						UUTF8_ID utf8{ ConvertToUTF8(wChar) };
+						TextEdit->InsertChar(utf8.Chars);
+					}
+				}
+				if (NewEvent.eEventType == EEventType::KeyStroke)
+				{
+					if (m_bIsIMECompositingPrev)
+					{
+						TextEdit->DeletePreChar();
+					}
+
+					wchar_t wChar{ (wchar_t)NewEvent.Extra };
+					if (wChar == L'\b')
+					{
+						TextEdit->DeletePreChar();
+					}
+					else if (wChar >= (wchar_t)0x20)
+					{
+						UUTF8_ID utf8{ ConvertToUTF8(wChar) };
+						TextEdit->InsertChar(utf8.Chars);
+					}
+				}
+				else if (NewEvent.eEventType == EEventType::KeyDown)
+				{
+					if (NewEvent.Extra == VK_RIGHT)
+					{
+						TextEdit->MoveCaret(CTextEdit::EDirection::Right);
+					}
+					else if (NewEvent.Extra == VK_LEFT)
+					{
+						TextEdit->MoveCaret(CTextEdit::EDirection::Left);
+					}
+					else if (NewEvent.Extra == VK_HOME)
+					{
+						TextEdit->MoveCaret(CTextEdit::EDirection::Home);
+					}
+					else if (NewEvent.Extra == VK_END)
+					{
+						TextEdit->MoveCaret(CTextEdit::EDirection::End);
+					}
+					else if (NewEvent.Extra == VK_DELETE)
+					{
+						TextEdit->DeletePostChar();
+					}
+				}
+			}
+		}
 
 		// These events need to be passed to the queue
 		if (NewEvent.eEventType == EEventType::MouseUp ||
@@ -374,6 +502,8 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 		}
 	}
 
+	m_bIsIMECompositingPrev = m_bIsIMECompositing; // @important
+
 	if (NewEvent.Widget)
 	{
 		if (NewEvent.eEventType == EEventType::MouseDown) m_LastMouseDownWidget = NewEvent.Widget;
@@ -387,20 +517,22 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
 void CGUIBase::Render() const
 {
+	m_PtrDeviceContext->RSSetState(m_RS.Get());
+
 	WINDOWINFO info{};
 	GetWindowInfo(m_hWnd, &info);
-	XMFLOAT2 WindowSize{ 
+	m_WindowSize = SFloat2(
 		(float)(info.rcClient.right - info.rcClient.left),
 		(float)(info.rcClient.bottom - info.rcClient.top)
-	};
-	m_CBSpaceData.Projection = XMMatrixOrthographicLH(WindowSize.x, WindowSize.y, 0, 1);
+	);
+	m_CBSpaceData.Projection = XMMatrixOrthographicLH(m_WindowSize.X, m_WindowSize.Y, 0, 1);
 
 	if (m_Atlas)
 	{
 		m_PtrDeviceContext->PSSetShaderResources(KAtlasSlot, 1, m_Atlas.GetAddressOf());
 	}
 
-	XMFLOAT2 HalfWindowSize{ WindowSize.x * 0.5f, WindowSize.y * 0.5f };
+	XMFLOAT2 HalfWindowSize{ m_WindowSize.X * 0.5f, m_WindowSize.Y * 0.5f };
 	const auto& WidgetNames{ m_WidgetPool.GetNames() };
 	for (const auto& WidgetName : WidgetNames)
 	{
@@ -412,19 +544,6 @@ void CGUIBase::Render() const
 			auto Src{ ((CImage*)Widget)->GetSource() };
 			m_PtrDeviceContext->PSSetShaderResources(KImageSlot, 1, &Src);
 		}
-
-		const auto& Position{ Widget->GetPosition() };
-		const auto& Offset{ Widget->GetOffset() };
-		auto Parent{ Widget->GetParent() };
-		const auto& ParentPosition{ (Parent) ? Parent->GetPosition() : SInt2() };
-		const auto& ParentOffset{ (Parent) ? Parent->GetOffset() : SInt2() };
-		
-		m_VS->Use();
-		m_PS->Use();
-		m_CBSpaceData.Offset.x = -HalfWindowSize.x + (float)ParentPosition.X + (float)ParentOffset.X + (float)Position.X + (float)Offset.X;
-		m_CBSpaceData.Offset.y = +HalfWindowSize.y - (float)ParentPosition.Y - (float)ParentOffset.Y - (float)Position.Y - (float)Offset.Y;
-		m_CBSpace->Update();
-		m_CBSpace->Use(EShaderType::VertexShader, 0);
 
 		Widget->Draw();
 	}
