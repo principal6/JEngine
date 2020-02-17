@@ -43,13 +43,17 @@ protected:
 
 protected:
 	bool _CreateButton(const std::string& Name, const SInt2& Size, CWidget* const ParentWidget = nullptr);
+	bool _CreateButtonPreset(const std::string& Name, const SInt2& Size, EButtonPreset ePreset, CWidget* const ParentWidget = nullptr);
+	bool _CreateImage(const std::string& Name, const SInt2& Size, CWidget* const ParentWidget = nullptr);
 	bool _CreateImage(const std::string& Name, const SInt2& Size, const SInt2& U0PixelCoord, CWidget* const ParentWidget = nullptr);
 	bool _CreateImage(const std::string& Name, const SInt2& Size, const SInt2& U0PixelCoord, 
 		const SInt2& SizeInTexturePixelCoord, CWidget* const ParentWidget = nullptr);
 	bool _CreateImageButton(const std::string& Name, const SInt2& Size, CWidget* const ParentWidget = nullptr);
-	bool _CreateWindow(const std::string& Name, const SInt2& Size,
+	bool _CreateWindowImage(const std::string& Name, const SInt2& Size,
 		const SInt2& U0PixelCoord, const SInt2& SizeInTexturePixelCoord,
 		const SInt2& TitleBarOffset, const SInt2& TitleBarSize, CWidget* const ParentWidget = nullptr);
+	bool _CreateWindowPrimitive(const std::string& Name, const SInt2& Size, float Roundness, CWidget* const ParentWidget = nullptr);
+	bool _CreateText(const std::string& Name, const SInt2& Size, const std::string& Content, CWidget* const ParentWidget = nullptr);
 
 public:
 	CWidget* GetWidget(const std::string& Name, CWidget* const ParentWidget = nullptr) const;
@@ -57,6 +61,9 @@ public:
 protected:
 	void SetWidgetStateTexCoordRange(const std::string& FullName, EWidgetState eWidgetState,
 		const SInt2& U0PixelCoord, const SInt2& SizeInTexturePixelCoord);
+
+public:
+	void SetFocus(CWidget* const Widget);
 
 public:
 	bool HasEvent() const;
@@ -69,41 +76,49 @@ public:
 	void Render() const;
 
 // Constants
+public:
+	static constexpr const char* KSysCloseID{ "_sys_close" };
+
+// Constants
 protected:
 	static constexpr D3D11_INPUT_ELEMENT_DESC KInputLayout[]
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLORTEX", 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
+	static constexpr uint32_t KImageSlot{ 90 };
 	static constexpr uint32_t KAtlasSlot{ 91 };
 
 // Device & device context & window handle
 protected:
-	ID3D11Device*								m_PtrDevice{};
-	ID3D11DeviceContext*						m_PtrDeviceContext{};
-	HWND										m_hWnd{};
+	ID3D11Device*						m_PtrDevice{};
+	ID3D11DeviceContext*				m_PtrDeviceContext{};
+	HWND								m_hWnd{};
 
 // Texture
 protected:
-	ComPtr<ID3D11ShaderResourceView>			m_Atlas{};
-	D3D11_TEXTURE2D_DESC						m_AtlasDesc{};
+	ComPtr<ID3D11ShaderResourceView>	m_Atlas{};
+	D3D11_TEXTURE2D_DESC				m_AtlasDesc{};
 
 // Shaders
 protected:
-	std::unique_ptr<CShader>					m_VS{};
-	std::unique_ptr<CShader>					m_PS{};
-	std::unique_ptr<CConstantBuffer>			m_CBSpace{};
-	mutable SCBSpaceData						m_CBSpaceData{};
+	std::unique_ptr<CShader>			m_VS{};
+	std::unique_ptr<CShader>			m_PS{};
+	std::unique_ptr<CConstantBuffer>	m_CBSpace{};
+	mutable SCBSpaceData				m_CBSpaceData{};
 
 protected:
-	CDynamicPool<CWidget>						m_WidgetPool{};
+	CDynamicPool<CWidget>				m_WidgetPool{};
 
 protected:
-	CBFNTRenderer								m_BFNTRenderer{ m_PtrDevice, m_PtrDeviceContext };
+	CBFNTRenderer						m_BFNTRenderer{ m_PtrDevice, m_PtrDeviceContext };
 
 protected:
-	mutable std::deque<SEvent>					m_EventQueue{};
-	CWidget*									m_LastMouseDownWidget{};
-	CWidget*									m_FocusedWidget{};
-	mutable bool								m_bMouseDown{ false };
+	mutable std::deque<SEvent>			m_EventQueue{};
+	CWidget*							m_LastMouseDownWidget{};
+	CWidget*							m_FocusedWidget{};
+	mutable bool						m_bMouseDown{ false };
+
+protected:
+	uint32_t							m_CaretBlinkTime{};
 };

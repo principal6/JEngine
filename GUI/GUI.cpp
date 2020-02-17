@@ -59,23 +59,29 @@ bool CGUI::CreateWindowWidget(EWindowType eType, const std::string& Name, CWidge
 	switch (eType)
 	{
 	case CGUI::EWindowType::Default:
-		if (_CreateWindow(Name, SInt2(396, 294), SInt2(0, 480), SInt2(396, 294), SInt2(5, 0), SInt2(318, 31), ParentWidget))
-		{
-			CWidget* const Window{ GetWidget(Name, ParentWidget) };
-			{
-				assert(CreateImageButton(CGUI::EImageButtonType::SysButtonClose, KSysCloseID, SInt2(48, 48), Window));
-				CWidget* Widget{ GetWidget(KSysCloseID, Window) };
-				Widget->SetOffset(SInt2(350, -8));
-				Widget->SetSelectionSize(SInt2(36, 36));
-			}
+		return _CreateWindowPrimitive(Name, SInt2(396, 294), KDefaultRoundness, ParentWidget);
 
-			// todo: focus change
-
-			return true;
-		}
+		//if (_CreateWindowImage(Name, SInt2(396, 294), SInt2(0, 480), SInt2(396, 294), SInt2(5, 0), SInt2(318, 31), ParentWidget))
+		//{
+		//	CWidget* const Window{ GetWidget(Name, ParentWidget) };
+		//	{
+		//		assert(CreateImageButton(CGUI::EImageButtonType::SysButtonClose, KSysCloseID, SInt2(48, 48), Window));
+		//		CWidget* Widget{ GetWidget(KSysCloseID, Window) };
+		//		Widget->SetOffset(SInt2(350, -8));
+		//		Widget->SetSelectionSize(SInt2(36, 36));
+		//	}
+		//	// todo: focus change
+		//	return true;
+		//}
+		
 		break;
 	default:
 		break;
 	}
 	return false;
+}
+
+bool CGUI::CreateText(const std::string& Name, const SInt2& Size, const std::string& Content, CWidget* const ParentWidget)
+{
+	return _CreateText(Name, Size, Content, ParentWidget);
 }

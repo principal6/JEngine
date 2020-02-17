@@ -157,7 +157,7 @@
     <ClCompile Include="Editor\IBLBaker.cpp" />
     <ClCompile Include="GUI\GUI.cpp" />
     <ClCompile Include="GUI\GUIBase.cpp" />
-    <ClCompile Include="GUI\Internal2D.cpp" />
+    <ClCompile Include="GUI\Primitive2D.cpp" />
     <ClCompile Include="GUI\Widget.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />
@@ -308,7 +308,7 @@
     <ClInclude Include="GUI\DynamicPoolDX11.h" />
     <ClInclude Include="GUI\GUI.h" />
     <ClInclude Include="GUI\GUIBase.h" />
-    <ClInclude Include="GUI\Internal2D.h" />
+    <ClInclude Include="GUI\Primitive2D.h" />
     <ClInclude Include="GUI\Widget.h" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />

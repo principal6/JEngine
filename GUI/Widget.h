@@ -3,7 +3,7 @@
 #include <string>
 #include <memory>
 #include "CommonTypes.h"
-#include "Internal2D.h"
+#include "Primitive2D.h"
 #include "../Core/BFNTRenderer.h"
 #include "../DirectXTK/DirectXTK.h"
 
@@ -23,9 +23,10 @@ protected:
 public:
 	virtual void Draw() const abstract;
 	bool ShouldDraw() const;
-
+	
 protected:
 	void DrawCaption() const;
+	void DrawCaption(const SInt2& SizeOverride, const SInt2& Offset) const;
 
 public:
 	void Capture(const SInt2& MousePosition) const;
@@ -45,6 +46,8 @@ public:
 	CWidget* GetParent() const;
 	size_t GetChildCount() const;
 	CWidget* GetChild(const std::string& Name) const;
+	bool IsChild(const std::string& Name) const;
+	bool IsChild(CWidget* const Widget) const;
 
 public:
 	void SetOffset(const SInt2& _Offset);
@@ -54,13 +57,17 @@ public:
 	void SetCaptionAlign(EVertAlign eVertAlign);
 	void SetCaptionAlign(EHorzAlign eHorzAlign, EVertAlign eVertAlign);
 	void SetCaptionColor(const SFloat4& CaptionColor);
+	const std::string& GetCaption() const;
 
 protected:
 	// @important: generates EEventType::Clicked
-	void UpdateState(const SInt2& MousePosition, EEventType& eEventType, bool bMouseDown, CWidget* LastMouseDownWidget);
+	void UpdateState(const SInt2& MousePosition, EEventType& eEventType, bool bMouseDown, CWidget* LastMouseDownWidget, bool bIsActive);
+	virtual void _SetActive() abstract;
+	virtual void _SetInactive() abstract;
 	void SetState(EWidgetState eState);
 	virtual void _SetState() abstract;
 	void SetStateTexCoordRange(EWidgetState eWidgetState, const SFloat4& TexCoordRange);
+	const SInt2& GetNewChildrenOffset() const;
 
 protected:
 	bool IsMouseInside(const SInt2& MousePosition);
@@ -72,7 +79,7 @@ protected:
 protected:
 	EWidgetType								m_eType{};
 	std::string								m_Name{};
-	CInternal2D								m_Internal2D{ m_PtrDevice, m_PtrDeviceContext };
+	CPrimitive2D							m_Primitive2D{ m_PtrDevice, m_PtrDeviceContext };
 
 protected:
 	std::unique_ptr<CBFNTRenderer>			m_BFNTRenderer{};
@@ -82,7 +89,7 @@ protected:
 	EVertAlign								m_eCaptionVertAlign{ EVertAlign::Middle };
 
 protected:
-	SInt2									m_Position{}; // this needs to be automatically calculated by CGUI
+	SInt2									m_Position{}; // this needs to be automatically calculated by CGUIBase
 	SInt2									m_Size{};
 	SInt2									m_Offset{};
 	SInt2									m_SelectionSize{};
@@ -99,13 +106,17 @@ protected:
 	mutable SInt2							m_CapturedOffset{};
 
 protected:
+	bool									m_bPrevIsActive{ false };
+
+protected:
 	CWidget*								m_Parent{};
 	std::vector<CWidget*>					m_vChildren{};
 	std::unordered_map<std::string, size_t>	m_umapChildNameToIndex{};
+	SInt2									m_NewChildrenOffset{};
 };
 
 // Button
-class CButton : public CWidget
+class CButton final : public CWidget
 {
 	friend class CGUIBase;
 
@@ -115,16 +126,22 @@ public:
 
 protected:
 	void Create(const std::string& Name, const SInt2& Size, CWidget* const Parent);
+	void CreatePreset(const std::string& Name, const SInt2& Size, EButtonPreset ePreset, CWidget* const Parent);
 
 public:
 	void Draw() const override;
 
 protected:
+	void _SetActive() override;
+	void _SetInactive() override;
 	void _SetState() override;
+
+private:
+	std::unique_ptr<CPrimitive2D>	m_PresetPrimitive{};
 };
 
 // Image
-class CImage : public CWidget
+class CImage final : public CWidget
 {
 	friend class CGUIBase;
 
@@ -136,14 +153,24 @@ protected:
 	void Create(const std::string& Name, const SInt2& Size, const SFloat4& TexCoordRange, CWidget* const Parent);
 
 public:
+	void SetSource(ID3D11ShaderResourceView* const SRV);
+	void SetSource(ID3D11ShaderResourceView* const SRV, const SFloat4& TexCoordRange);
+	ID3D11ShaderResourceView* GetSource() const;
+
+public:
 	void Draw() const override;
 
 protected:
+	void _SetActive() override;
+	void _SetInactive() override;
 	void _SetState() override;
+
+private:
+	ID3D11ShaderResourceView*	m_SRV{};
 };
 
 // Image button
-class CImageButton : public CWidget
+class CImageButton final : public CWidget
 {
 	friend class CGUIBase;
 
@@ -158,11 +185,13 @@ public:
 	void Draw() const override;
 
 protected:
+	void _SetActive() override;
+	void _SetInactive() override;
 	void _SetState() override;
 };
 
 // Window
-class CWindow : public CWidget
+class CWindow final : public CWidget
 {
 	friend class CGUIBase;
 
@@ -171,7 +200,8 @@ public:
 	~CWindow();
 
 protected:
-	void Create(const std::string& Name, const SInt2& Size, const SFloat4& TexCoordRange, CWidget* const Parent);
+	void CreateImage(const std::string& Name, const SInt2& Size, const SFloat4& TexCoordRange, CWidget* const Parent);
+	void CreatePrimitive(const std::string& Name, const SInt2& Size, float Roundness, CWidget* const Parent);
 
 public:
 	void Open();
@@ -188,10 +218,39 @@ public:
 	void Draw() const override;
 
 protected:
+	void _SetActive() override;
+	void _SetInactive() override;
 	void _SetState() override;
 
 private:
-	SInt2	m_TitleBarLeftTop{};
-	SInt2	m_TitleBarSize{};
-	bool	m_bIsOpen{ false };
+	SInt2							m_TitleBarLeftTop{};
+	SInt2							m_TitleBarSize{};
+	bool							m_bIsOpen{ false };
+
+private:
+	std::unique_ptr<CPrimitive2D>	m_TitleBarPrimitive{};
+};
+
+// Text
+class CText final : public CWidget
+{
+	friend class CGUIBase;
+
+public:
+	CText(ID3D11Device* const Device, ID3D11DeviceContext* const DeviceContext, CBFNTRenderer* const BFNTRenderer);
+	~CText();
+
+protected:
+	void Create(const std::string& Name, const SInt2& Size, CWidget* const Parent);
+
+public:
+	void Draw() const override;
+
+public:
+	void SetBackgroundColor(const SFloat4& Color);
+
+protected:
+	void _SetActive() override;
+	void _SetInactive() override;
+	void _SetState() override;
 };

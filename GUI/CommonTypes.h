@@ -2,6 +2,11 @@
 
 #include <cstdint>
 
+enum class EButtonPreset
+{
+	Close,
+};
+
 enum class EHorzAlign
 {
 	Left,
@@ -128,7 +133,15 @@ struct SVertex
 };
 
 // Default color theme
-static constexpr SFloat4 KDefaultButtonNormal{ 0, 0.4375f, 0.625f, 1 };
-static constexpr SFloat4 KDefaultButtonHover{ 0, 0.625f, 0.875f, 1 };
-static constexpr SFloat4 KDefaultButtonPressed{ 0, 0.75f, 0.9375f, 1 };
-static constexpr float KDefaultRoundness{ 0.25f };
+static constexpr SFloat4 KDefaultButtonNormalColor{ 0, 0.4375f, 0.625f, 1 };
+static constexpr SFloat4 KDefaultButtonHoverColor{ 0, 0.625f, 0.875f, 1 };
+static constexpr SFloat4 KDefaultButtonPressedColor{ 0, 0.75f, 0.9375f, 1 };
+static constexpr SFloat4 KDefaultTitleBarActiveColor{ 0, 0.3125f, 0.625f, 1 };
+static constexpr SFloat4 KDefaultTitleBarInactiveColor{ 0.25f, 0.5f, 0.75f, 1 };
+static constexpr SFloat4 KDefaultWindowBackgroundColor{ 0.125f, 0.1875f, 0.25f, 1 };
+static constexpr SFloat4 KDefaultIconColor{ 0.875f, 1.0f, 1.0f, 1 };
+static constexpr SFloat4 KDefaultFontColor{ KDefaultIconColor };
+//static constexpr float KDefaultRoundness{ 0.25f }; // relative roundness -unit: percentage
+static constexpr float KDefaultRoundness{ 6 }; // absolute roundness -unit: pixel
+static constexpr int32_t KDefaultTitleBarHeight{ 24 };
+static constexpr int32_t KDefaultTitleBarCaptionIndent{ 6 };

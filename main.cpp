@@ -46,18 +46,23 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	
 	Gui.CreateButton("btn", SInt2(100, 48));
 	Gui.GetWidget("btn")->SetOffset(SInt2(100, 40));
-	Gui.GetWidget("btn")->SetCaption(u8"윈도우 열기");
+	Gui.GetWidget("btn")->SetCaption(u8"창 열기");
 
 	{
 		Gui.CreateWindowWidget(CGUI::EWindowType::Default, "wnd");
 		CWindow* const Window{ (CWindow*)Gui.GetWidget("wnd") };
 		Window->SetOffset(SInt2(200, 40));
+		Window->SetCaption(u8"시험용 창!");
 
 		Gui.CreateImageButton(CGUI::EImageButtonType::Button, "imgbtn", SInt2(288, 72), Window);
 		Window->GetChild("imgbtn")->SetOffset(SInt2(20, 50));
 		Window->GetChild("imgbtn")->SetSelectionSize(SInt2(230, 60));
 		Window->GetChild("imgbtn")->SetCaption(u8"이미지 버튼");
 		Window->GetChild("imgbtn")->SetCaptionColor(SFloat4(1, 1, 0.75f, 1));
+
+		Gui.CreateText("tx", SInt2(100, 30), u8"가나다abc", Window);
+		CText* tx{ (CText*)Window->GetChild("tx") };
+		tx->SetBackgroundColor(SFloat4(1, 0, 0, 0.5f));
 	}
 	
 	g_GUI = &Gui;
@@ -97,11 +102,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 					{
 						CWindow* const Window{ (CWindow*)Gui.GetWidget("wnd") };
 						Window->Open();
-					}
-					if (Evenet.Widget == Gui.GetWidget("wnd")->GetChild(CGUI::KSysCloseID))
-					{
-						CWindow* const Window{ (CWindow*)Gui.GetWidget("wnd") };
-						Window->Close();
+
+						//Gui.SetFocus(Window);
 					}
 				}
 			}

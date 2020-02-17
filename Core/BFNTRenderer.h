@@ -63,7 +63,7 @@ private:
 		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0,  8, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
-	static constexpr size_t			KInitialStringCapacity{ 128 };
+	static constexpr size_t			KInitialStringCapacity{ 64 };
 	static constexpr size_t			KMaxStringCapacity{ 2048 };
 	static constexpr UINT			KDefaultCBSpaceSlot{ KVSSharedCBCount };
 	static constexpr UINT			KDefaultCBColorSlot{ KPSSharedCBCount };

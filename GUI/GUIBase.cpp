@@ -40,6 +40,8 @@ void CGUIBase::_Create(HWND hWnd, const std::string& BFNTFileName)
 	};
 
 	m_BFNTRenderer.Create(BFNTFileName, WindowSize);
+
+	m_CaretBlinkTime = GetCaretBlinkTime();
 }
 
 void CGUIBase::_CreateTextureAtlas(const std::string& FileName)
@@ -75,6 +77,24 @@ bool CGUIBase::_CreateButton(const std::string& Name, const SInt2& Size, CWidget
 		return true;
 	}
 	return false;
+}
+
+bool CGUIBase::_CreateButtonPreset(const std::string& Name, const SInt2& Size, EButtonPreset ePreset, CWidget* const ParentWidget)
+{
+	CWidget* NewButton{ new CButton(m_PtrDevice, m_PtrDeviceContext, &m_BFNTRenderer) };
+	string FullName{ Name };
+	if (ParentWidget) FullName = ParentWidget->GetName() + FullName;
+	if (m_WidgetPool.Insert(FullName, NewButton))
+	{
+		((CButton*)NewButton)->CreatePreset(Name, Size, ePreset, ParentWidget);
+		return true;
+	}
+	return false;
+}
+
+bool CGUIBase::_CreateImage(const std::string& Name, const SInt2& Size, CWidget* const ParentWidget)
+{
+	return _CreateImage(Name, Size, SInt2(0, 0), ParentWidget);
 }
 
 bool CGUIBase::_CreateImage(const std::string& Name, const SInt2& Size, const SInt2& U0PixelCoord, CWidget* const ParentWidget)
@@ -117,7 +137,7 @@ bool CGUIBase::_CreateImageButton(const std::string& Name, const SInt2& Size, CW
 	return false;
 }
 
-bool CGUIBase::_CreateWindow(const std::string& Name, const SInt2& Size, 
+bool CGUIBase::_CreateWindowImage(const std::string& Name, const SInt2& Size, 
 	const SInt2& U0PixelCoord, const SInt2& SizeInTexturePixelCoord, 
 	const SInt2& TitleBarOffset, const SInt2& TitleBarSize, CWidget* const ParentWidget)
 {
@@ -134,8 +154,41 @@ bool CGUIBase::_CreateWindow(const std::string& Name, const SInt2& Size,
 		float U1{ U0 + (float)SizeInTexturePixelCoord.X / AtlasWidth };
 		float V1{ V0 + (float)SizeInTexturePixelCoord.Y / AtlasHeight };
 
-		((CWindow*)NewWindow)->Create(Name, Size, SFloat4(U0, V0, U1, V1), ParentWidget);
+		((CWindow*)NewWindow)->CreateImage(Name, Size, SFloat4(U0, V0, U1, V1), ParentWidget);
 		((CWindow*)NewWindow)->SetTitleBar(TitleBarOffset, TitleBarSize);
+
+		return true;
+	}
+	return false;
+}
+
+bool CGUIBase::_CreateWindowPrimitive(const std::string& Name, const SInt2& Size, float Roundness, CWidget* const ParentWidget)
+{
+	CWidget* NewWindow{ new CWindow(m_PtrDevice, m_PtrDeviceContext, &m_BFNTRenderer) };
+	string FullName{ Name };
+	if (ParentWidget) FullName = ParentWidget->GetName() + FullName;
+	if (m_WidgetPool.Insert(FullName, NewWindow))
+	{
+		((CWindow*)NewWindow)->CreatePrimitive(Name, Size, Roundness, ParentWidget);
+		{
+			assert(_CreateButtonPreset(KSysCloseID, SInt2(KDefaultTitleBarHeight, KDefaultTitleBarHeight), EButtonPreset::Close, NewWindow));
+			CWidget* Widget{ GetWidget(KSysCloseID, NewWindow) };
+			Widget->SetOffset(SInt2(Size.X - KDefaultTitleBarHeight, 0));
+		}
+		return true;
+	}
+	return false;
+}
+
+bool CGUIBase::_CreateText(const std::string& Name, const SInt2& Size, const std::string& Content, CWidget* const ParentWidget)
+{
+	CWidget* NewText{ new CText(m_PtrDevice, m_PtrDeviceContext, &m_BFNTRenderer) };
+	string FullName{ Name };
+	if (ParentWidget) FullName = ParentWidget->GetName() + FullName;
+	if (m_WidgetPool.Insert(FullName, NewText))
+	{
+		((CText*)NewText)->Create(Name, Size, ParentWidget);
+		((CText*)NewText)->SetCaption(Content);
 
 		return true;
 	}
@@ -166,6 +219,11 @@ void CGUIBase::SetWidgetStateTexCoordRange(const std::string& FullName, EWidgetS
 
 		Widget->SetStateTexCoordRange(eWidgetState, SFloat4(U0, V0, U1, V1));
 	}
+}
+
+void CGUIBase::SetFocus(CWidget* const Widget)
+{
+	m_FocusedWidget = Widget;
 }
 
 bool CGUIBase::HasEvent() const
@@ -254,7 +312,8 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	for (const auto& Name : Names)
 	{
 		auto Widget{ m_WidgetPool.Get(Name) };
-		Widget->UpdateState(MousePosition, NewEvent.eEventType, m_bMouseDown, m_LastMouseDownWidget);
+		bool bIsActive{ (Widget->IsChild(m_FocusedWidget) ? true : Widget == m_FocusedWidget) };
+		Widget->UpdateState(MousePosition, NewEvent.eEventType, m_bMouseDown, m_LastMouseDownWidget, bIsActive);
 
 		// These events need to be passed to the queue
 		if (NewEvent.eEventType == EEventType::MouseUp ||
@@ -265,33 +324,51 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 			if (Widget->IsMouseInside(MousePosition))
 			{
 				NewEvent.Widget = Widget;
-			}
 
-			if (Widget->GetType() == EWidgetType::Window)
-			{
-				CWindow* Window{ (CWindow*)Widget };
-				if (Window->IsCaptured())
+				if (NewEvent.eEventType == EEventType::Clicked)
 				{
-					if (NewEvent.eEventType == EEventType::MouseUp || NewEvent.eEventType == EEventType::Clicked)
+					m_FocusedWidget = Widget;
+
+					if (Widget->GetType() == EWidgetType::Window)
 					{
-						Widget->Release();
+						NewEvent.eEventType = EEventType::MouseUp; // @important: prevent corruption
 					}
-					else if (NewEvent.eEventType == EEventType::MouseMove)
+					if (Widget->GetName() == KSysCloseID)
 					{
-						const auto& CapturedMousePosition{ Widget->GetCapturedMousePosition() };
-						const auto& CapturedOffset{ Widget->GetCapturedOffset() };
-						auto DeltaMousePosition{ MousePosition - CapturedMousePosition };
-						Widget->SetOffset(CapturedOffset + DeltaMousePosition);
+						CWidget* const Parent{ Widget->GetParent() };
+						if (Parent && Parent->GetType() == EWidgetType::Window)
+						{
+							((CWindow*)Parent)->Close();
+						}
 					}
-					NewEvent.Widget = Widget;
 				}
-				else if (Window->IsMouseOnTitleBar(MousePosition))
+			}
+		}
+
+		if (Widget->GetType() == EWidgetType::Window)
+		{
+			CWindow* Window{ (CWindow*)Widget };
+			if (Window->IsCaptured())
+			{
+				if (NewEvent.eEventType == EEventType::MouseUp || NewEvent.eEventType == EEventType::Clicked) // @ EEventType::Clicked is impossible here?
 				{
-					if (NewEvent.eEventType == EEventType::MouseDown)
-					{
-						Widget->Capture(MousePosition);
-						NewEvent.Widget = Widget;
-					}
+					Widget->Release();
+				}
+				else if (NewEvent.eEventType == EEventType::MouseMove)
+				{
+					const auto& CapturedMousePosition{ Widget->GetCapturedMousePosition() };
+					const auto& CapturedOffset{ Widget->GetCapturedOffset() };
+					auto DeltaMousePosition{ MousePosition - CapturedMousePosition };
+					Widget->SetOffset(CapturedOffset + DeltaMousePosition);
+				}
+				NewEvent.Widget = Widget;
+			}
+			else if (Window->IsMouseOnTitleBar(MousePosition))
+			{
+				if (NewEvent.eEventType == EEventType::MouseDown)
+				{
+					Widget->Capture(MousePosition);
+					NewEvent.Widget = Widget;
 				}
 			}
 		}
@@ -330,6 +407,11 @@ void CGUIBase::Render() const
 		const auto& Widget{ m_WidgetPool.Get(WidgetName) };
 		EWidgetType eType{ Widget->GetType() };
 		if (!Widget->ShouldDraw()) continue;
+		if (eType == EWidgetType::Image && ((CImage*)Widget)->GetSource())
+		{
+			auto Src{ ((CImage*)Widget)->GetSource() };
+			m_PtrDeviceContext->PSSetShaderResources(KImageSlot, 1, &Src);
+		}
 
 		const auto& Position{ Widget->GetPosition() };
 		const auto& Offset{ Widget->GetOffset() };

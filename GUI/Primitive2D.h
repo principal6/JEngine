@@ -8,15 +8,16 @@ struct ID3D11DeviceContext;
 struct ID3D11Buffer;
 struct ID3D11ShaderResourceView;
 
-class CInternal2D
+class CPrimitive2D
 {
 public:
-	CInternal2D(ID3D11Device* const Device, ID3D11DeviceContext* const DeviceContext);
-	~CInternal2D();
+	CPrimitive2D(ID3D11Device* const Device, ID3D11DeviceContext* const DeviceContext);
+	~CPrimitive2D();
 
 public:
-	void CreateColor(const SInt2& Size, const SFloat4& Color, float Roundness = 0);
+	void CreateShape(const SInt2& Size, const SFloat4& Color, float Roundness = 0, bool bFlatBottom = false);
 	void CreateImage(const SInt2& Size, const SFloat4& TexCoordRange);
+	void CreateLine(const std::vector<SVertex>& vVertices);
 
 private:
 	void CreateBuffers();
