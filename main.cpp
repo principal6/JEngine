@@ -54,19 +54,19 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		Window->SetOffset(SInt2(200, 40));
 		Window->SetCaption(u8"시험용 창!");
 
-		Gui.CreateImageButton(CGUI::EImageButtonType::Button, "imgbtn", SInt2(288, 72), Window);
-		Window->GetChild("imgbtn")->SetOffset(SInt2(20, 50));
-		Window->GetChild("imgbtn")->SetSelectionSize(SInt2(230, 60));
-		Window->GetChild("imgbtn")->SetCaption(u8"이미지 버튼");
-		Window->GetChild("imgbtn")->SetCaptionColor(SFloat4(1, 1, 0.75f, 1));
-
 		Gui.CreateText("tx", SInt2(100, 30), u8"가나다abc", Window);
 		CText* tx{ (CText*)Window->GetChild("tx") };
 		tx->SetBackgroundColor(SFloat4(1, 0, 0, 0.5f));
 
+		Gui.CreateImageButton(CGUI::EImageButtonType::Button, "imgbtn", SInt2(288, 72), Window);
+		Window->GetChild("imgbtn")->SetOffset(SInt2(20, 30));
+		Window->GetChild("imgbtn")->SetSelectionSize(SInt2(230, 60));
+		Window->GetChild("imgbtn")->SetCaption(u8"이미지 버튼");
+		Window->GetChild("imgbtn")->SetCaptionColor(SFloat4(1, 1, 0.75f, 1));
+
 		Gui.CreateTextEdit("edit", SInt2(100, 30), Window);
 		CTextEdit* edit{ (CTextEdit*)Window->GetChild("edit") };
-		edit->SetOffset(SInt2(0, 60));
+		edit->SetOffset(SInt2(0, 100));
 	}
 	
 	g_GUI = &Gui;

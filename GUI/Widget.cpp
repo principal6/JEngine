@@ -6,6 +6,7 @@
 #include "../Core/ConstantBuffer.h"
 
 using std::min;
+using std::max;
 using std::make_unique;
 using std::chrono::steady_clock;
 
@@ -668,13 +669,14 @@ void CTextEdit::Create(const std::string& Name, const SInt2& Size, CWidget* cons
 	m_CaretPrimitive = make_unique<CPrimitive2D>(m_PtrDevice, m_PtrDeviceContext);
 	m_CaretPrimitive->CreateLine(
 		{
-			SVertex(SFloat4(1, -1, 0, 1), KDefaultCaretColor),
-			SVertex(SFloat4(1, -1 -(float)FontData.LineHeight, 0, 1), KDefaultCaretColor),
+			SVertex(SFloat4(KSpaceHorz + 1, -KSpaceVert, 0, 1), KDefaultCaretColor),
+			SVertex(SFloat4(KSpaceHorz + 1, -KSpaceVert -(float)FontData.LineHeight, 0, 1), KDefaultCaretColor),
 		}
 	);
 
 	SetCaptionAlign(EHorzAlign::Left, EVertAlign::Top);
 	SetCaptionColor(KDefaultFontColor);
+	MoveCaret(EDirection::Left);
 }
 
 void CTextEdit::_Draw() const
@@ -695,11 +697,11 @@ void CTextEdit::_Draw() const
 		D3D11_RECT ScissorRect{};
 		ScissorRect.top = ParentPosition.Y + ParentOffset.Y + m_Position.Y + m_Offset.Y;
 		ScissorRect.bottom = ScissorRect.top + m_Size.Y;
-		ScissorRect.left = ParentPosition.X + ParentOffset.X + m_Position.X + m_Offset.X;
-		ScissorRect.right = ScissorRect.left + m_Size.X;
+		ScissorRect.left = ParentPosition.X + ParentOffset.X + m_Position.X + m_Offset.X + KSpaceHorz;
+		ScissorRect.right = ScissorRect.left + m_Size.X - KSpaceHorz * 2;
 		m_PtrDeviceContext->RSSetScissorRects(1, &ScissorRect);
 
-		DrawCaption(m_Size, SInt2(1, 1));
+		DrawCaption(m_Size, SInt2(KSpaceHorz + m_StringOffsetX, KSpaceVert));
 
 		m_PtrDeviceContext->RSSetScissorRects(OldCount, OldRects);
 	}
@@ -718,8 +720,9 @@ void CTextEdit::_Draw() const
 		uint32_t CaretBlinkTime{ *m_PtrCaretBlinkTime };
 		if (m_CaretTimer <= CaretBlinkTime)
 		{
-			size_t ByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt) };
-			m_PtrCBSpaceData->Offset.x += m_BFNTRenderer->CalculateStringWidth(m_Caption.substr(0, ByteAt).c_str());
+			int32_t StringWidth{ (int32_t)m_BFNTRenderer->CalculateStringWidth(m_Caption.c_str()) };
+			int32_t AlignOffsetX{ (m_eCaptionHorzAlign == EHorzAlign::Center) ? (m_Size.X / 2) - (StringWidth / 2) : 0 };
+			m_PtrCBSpaceData->Offset.x += m_CaretOffsetX + m_StringOffsetX + AlignOffsetX;
 			m_PtrCBSpace->Update();
 
 			m_CaretPrimitive->Draw();
@@ -751,12 +754,18 @@ void CTextEdit::InsertChar(const std::string& UTF8_Char)
 
 void CTextEdit::MoveCaret(EDirection eDirection)
 {
+	const int32_t _SizeX{ m_Size.X - KSpaceHorz * 2 };
 	if (eDirection == EDirection::Right)
 	{
-		if (m_CaretAt < GetUTF8StringLength(m_Caption.c_str()))
+		if (m_CaretAt < (uint32_t)GetUTF8StringLength(m_Caption.c_str()))
 		{
 			++m_CaretAt;
 			m_CaretTimer = 0;
+
+			size_t ByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt) };
+			m_CaretOffsetX = (int32_t)m_BFNTRenderer->CalculateStringWidth(m_Caption.substr(0, ByteAt).c_str());
+			int32_t DeltaStringOffsetX{ (_SizeX - m_CaretOffsetX < 0) ? _SizeX - m_CaretOffsetX - m_StringOffsetX : 0 };
+			m_StringOffsetX += DeltaStringOffsetX;
 		}
 	}
 	else if (eDirection == EDirection::Left)
@@ -765,17 +774,33 @@ void CTextEdit::MoveCaret(EDirection eDirection)
 		{
 			--m_CaretAt;
 			m_CaretTimer = 0;
+
+			size_t ByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt) };
+			m_CaretOffsetX = (int32_t)m_BFNTRenderer->CalculateStringWidth(m_Caption.substr(0, ByteAt).c_str());
+			int32_t DeltaStringOffsetX{ (m_CaretOffsetX < abs(m_StringOffsetX)) ? abs(m_StringOffsetX) - m_CaretOffsetX : 0 };
+			m_StringOffsetX += DeltaStringOffsetX;
 		}
 	}
 	else if (eDirection == EDirection::Home)
 	{
 		m_CaretAt = 0;
 		m_CaretTimer = 0;
+
+		m_CaretOffsetX = 0;
+		m_StringOffsetX = 0;
 	}
 	else if (eDirection == EDirection::End)
 	{
 		m_CaretAt = (uint32_t)GetUTF8StringLength(m_Caption.c_str());
 		m_CaretTimer = 0;
+
+		m_CaretOffsetX = (int32_t)m_BFNTRenderer->CalculateStringWidth(m_Caption.c_str());
+		m_StringOffsetX = ((_SizeX - m_CaretOffsetX < 0) ? _SizeX - m_CaretOffsetX : 0);
+	}
+
+	if (m_eCaptionHorzAlign == EHorzAlign::Center)
+	{
+		m_StringOffsetX = -KSpaceHorz;
 	}
 }
 
@@ -802,6 +827,17 @@ void CTextEdit::DeletePostChar()
 		std::string Pre{ m_Caption.substr(0, ByteAt) };
 		std::string Post{ m_Caption.substr(PostByteAt) };
 		m_Caption = Pre + Post;
+
+		if (m_CaretAt < GetUTF8StringLength(m_Caption.c_str()))
+		{
+			MoveCaret(EDirection::Right);
+			MoveCaret(EDirection::Left);
+		}
+		else
+		{
+			MoveCaret(EDirection::Left);
+			MoveCaret(EDirection::Right);
+		}
 	}
 }
 

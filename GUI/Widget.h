@@ -315,9 +315,15 @@ private:
 	void _SetState() override;
 
 private:
+	static constexpr int32_t		KSpaceVert{ 2 };
+	static constexpr int32_t		KSpaceHorz{ 3 };
+
+private:
 	std::unique_ptr<CPrimitive2D>	m_CaretPrimitive{};
 	uint32_t*						m_PtrCaretBlinkTime{};
 	mutable uint32_t				m_CaretTimer{};
 	mutable uint32_t				m_PrevTimePoint_ms{};
 	uint32_t						m_CaretAt{};
+	int32_t							m_CaretOffsetX{};
+	int32_t							m_StringOffsetX{};
 };
