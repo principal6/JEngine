@@ -304,7 +304,7 @@ protected:
 	void _Draw() const override;
 
 private:
-	void InsertChar(const std::string& UTF8_Char);
+	bool InsertChar(const std::string& UTF8_Char);
 	void InsertString(const std::string& UTF8_String);
 	void MoveCaret(EDirection eDirection, bool bShouldDeselect = true);
 	void MoveCaret(const SInt2& MousePosition);
@@ -335,6 +335,7 @@ private:
 private:
 	static constexpr int32_t		KSpaceVert{ 2 };
 	static constexpr int32_t		KSpaceHorz{ 3 };
+	static constexpr uint32_t		KMaxStringLength{ 1000 };
 
 private:
 	std::unique_ptr<CPrimitive2D>	m_CaretPrimitive{};

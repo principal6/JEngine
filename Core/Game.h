@@ -19,6 +19,7 @@
 #include "Light.h"
 #include "CascadedShadowMap.h"
 #include "FullScreenQuad.h"
+#include "BFNTBaker.h"
 #include "BFNTRenderer.h"
 #include "DynamicPool.h"
 #include "../Model/Object3D.h"
@@ -372,7 +373,7 @@ public:
 	~CGame();
 
 public:
-	void CreateWin32(WNDPROC const WndProc, const std::string& WindowName, bool bWindowed);
+	void CreateWin32(WNDPROC const WndProc, const std::string& WindowName, bool bWindowed, bool bCreateEditor);
 	void Destroy();
 	bool IsDestroyed() const;
 
@@ -380,7 +381,7 @@ private:
 	void CreateWin32Window(WNDPROC const WndProc, const std::string& WindowName);
 	void InitializeDirectX(bool bWindowed);
 	void InitializeGameData();
-	void InitializeEditorAssets();
+	void InitializeEditorAssets(bool bCreateEditor);
 	void InitializeImGui(const std::string& FontFileName, float FontSize);
 
 private:

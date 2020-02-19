@@ -15,6 +15,7 @@ IMGUI_IMPL_API LRESULT  ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPAR
 LRESULT CALLBACK WndProc(_In_ HWND hWnd, _In_ UINT Msg, _In_ WPARAM wParam, _In_ LPARAM lParam);
 
 CGUIBase* g_GUI{};
+CGame* g_Game{};
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
@@ -23,30 +24,39 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	//_CrtSetBreakAlloc(1374600);
 #endif
 
+	/*CBFNTBaker Baker{};
+	Baker.AddCharRange(SCharRange(0, 0x33DD));
+	Baker.AddCharRange(SCharRange(0x4E00, 0x9FFF)); // CJK ideographs
+	Baker.AddCharRange(SCharRange(0xAC00, 0xD7A3)); // Korean [°¡, ÆR]
+	Baker.AddCharRange(SCharRange(0xFF00, 0xFFEE)); // Full-width forms
+	Baker.BakeFont("Asset\\D2Coding.ttf", 16, "Asset");*/
+
 	static constexpr XMFLOAT2 KGameWindowSize{ 1280.0f, 720.0f };
 	CGame Game{ hInstance, KGameWindowSize };
+	g_Game = &Game;
 
-	Game.CreateWin32(WndProc, u8"JEngine", true);
+	Game.CreateWin32(WndProc, u8"JEngine", true, false);
 
 	Game.SetRenderingFlags(CGame::EFlagsRendering::UseLighting | CGame::EFlagsRendering::DrawMiniAxes | CGame::EFlagsRendering::DrawGrid |
 		CGame::EFlagsRendering::DrawTerrainHeightMapTexture | CGame::EFlagsRendering::DrawTerrainMaskingTexture | CGame::EFlagsRendering::DrawIdentifiers |
 		CGame::EFlagsRendering::DrawTerrainFoliagePlacingTexture | CGame::EFlagsRendering::TessellateTerrain | 
 		CGame::EFlagsRendering::Use3DGizmos | CGame::EFlagsRendering::UsePhysicallyBasedRendering);
 
-	Game.CreateDynamicSky("Asset\\Sky.xml", 30.0f);
+	//Game.CreateDynamicSky("Asset\\Sky.xml", 30.0f);
 	Game.CreateStaticSky(30.0f);
 
 	//Game.LoadScene("Scene\\mayan_dungeon.scene");
-	//Game.LoadScene("Scene\\ai_test.scene");
-	//Game.SetMode(CGame::EMode::Play);
+	Game.LoadScene("Scene\\ai_test.scene");
+	Game.SetMode(CGame::EMode::Play);
 
 
 	CGUI Gui{ Game.GetDevicePtr(), Game.GetDeviceContextPtr() };
 	Gui.Create(Game.GethWnd());
 	
-	Gui.CreateButton("btn", SInt2(100, 48));
-	Gui.GetWidget("btn")->SetOffset(SInt2(100, 40));
-	Gui.GetWidget("btn")->SetCaption(u8"Ã¢ ¿­±â");
+	Gui.CreateButton("btn", SInt2(96, 32));
+	Gui.GetWidget("btn")->SetOffset(SInt2(20, 20));
+	Gui.GetWidget("btn")->SetCaption(u8"½Ã½ºÅÛ");
+	Gui.GetWidget("btn")->SetCaptionColor(KDefaultFontColor);
 
 	{
 		Gui.CreateWindowWidget(CGUI::EWindowType::Default, "wnd");
@@ -56,7 +66,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
 		Gui.CreateText("tx", SInt2(100, 30), u8"°¡³ª´Ùabc", Window);
 		CText* tx{ (CText*)Window->GetChild("tx") };
-		tx->SetBackgroundColor(SFloat4(1, 0, 0, 0.5f));
+		tx->SetBackgroundColor(SFloat4(1, 1, 1, 0.25f));
 
 		Gui.CreateImageButton(CGUI::EImageButtonType::Button, "imgbtn", SInt2(288, 72), Window);
 		Window->GetChild("imgbtn")->SetOffset(SInt2(20, 30));
@@ -79,12 +89,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		if (PeekMessage(&Msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			if (Msg.message == WM_QUIT) break;
-
 			if (Msg.message == WM_KEYDOWN) KeyDown = (char)Msg.wParam;
 			
-			if (Msg.message == WM_LBUTTONDOWN) Game.NotifyMouseLeftDown();
-			if (Msg.message == WM_LBUTTONUP) Game.NotifyMouseLeftUp();
-
 			TranslateMessage(&Msg);
 			DispatchMessage(&Msg);
 		}
@@ -106,8 +112,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 					{
 						CWindow* const Window{ (CWindow*)Gui.GetWidget("wnd") };
 						Window->Open();
-
-						//Gui.SetFocus(Window);
 					}
 				}
 			}
@@ -132,20 +136,32 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
 LRESULT CALLBACK WndProc(_In_ HWND hWnd, _In_ UINT Msg, _In_ WPARAM wParam, _In_ LPARAM lParam)
 {
-	if (g_GUI) g_GUI->GenerateEvent(hWnd, Msg, wParam, lParam);
+	if (g_GUI)
+	{
+		if (g_GUI->GenerateEvent(hWnd, Msg, wParam, lParam))
+		{
+			return DefWindowProc(hWnd, Msg, wParam, lParam);
+		}
+	}
 
-	if (ImGui_ImplWin32_WndProcHandler(hWnd, Msg, wParam, lParam))
-		return 0;
+	if (g_Game->GetMode() != CGame::EMode::Play)
+	{
+		if (ImGui_ImplWin32_WndProcHandler(hWnd, Msg, wParam, lParam))
+			return 0;
+	}
 
 	switch (Msg)
 	{
-	case WM_ACTIVATEAPP:
-		Keyboard::ProcessMessage(Msg, wParam, lParam);
+	case WM_LBUTTONDOWN:
+		g_Game->NotifyMouseLeftDown();
+		Mouse::ProcessMessage(Msg, wParam, lParam);
+		break;
+	case WM_LBUTTONUP:
+		g_Game->NotifyMouseLeftUp();
+		Mouse::ProcessMessage(Msg, wParam, lParam);
 		break;
 	case WM_INPUT:
 	case WM_MOUSEMOVE:
-	case WM_LBUTTONDOWN:
-	case WM_LBUTTONUP:
 	case WM_RBUTTONDOWN:
 	case WM_RBUTTONUP:
 	case WM_MBUTTONDOWN:
@@ -156,6 +172,7 @@ LRESULT CALLBACK WndProc(_In_ HWND hWnd, _In_ UINT Msg, _In_ WPARAM wParam, _In_
 	case WM_MOUSEHOVER:
 		Mouse::ProcessMessage(Msg, wParam, lParam);
 		break;
+	case WM_ACTIVATEAPP:
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
 	case WM_KEYUP:

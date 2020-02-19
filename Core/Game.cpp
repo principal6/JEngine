@@ -27,7 +27,7 @@ CGame::~CGame()
 	if (!IsDestroyed()) Destroy();
 }
 
-void CGame::CreateWin32(WNDPROC const WndProc, const std::string& WindowName, bool bWindowed)
+void CGame::CreateWin32(WNDPROC const WndProc, const std::string& WindowName, bool bWindowed, bool bCreateEditor)
 {
 	CreateWin32Window(WndProc, WindowName);
 
@@ -35,21 +35,23 @@ void CGame::CreateWin32(WNDPROC const WndProc, const std::string& WindowName, bo
 
 	InitializeGameData();
 
-	InitializeEditorAssets();
-
-	InitializeImGui("Asset\\D2Coding.ttf", 15.0f);
-
+	InitializeEditorAssets(bCreateEditor);
+	if (bCreateEditor) InitializeImGui("Asset\\D2Coding.ttf", 15.0f);
+	
 	m_bIsDestroyed = false;
 }
 
 void CGame::Destroy()
 {
-	ImGuiIO& igIO{ ImGui::GetIO() };
-	igIO.Fonts->ClearFonts();
+	if (ImGui::GetCurrentContext())
+	{
+		ImGuiIO& igIO{ ImGui::GetIO() };
+		igIO.Fonts->ClearFonts();
 
-	ImGui_ImplDX11_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
+		ImGui_ImplDX11_Shutdown();
+		ImGui_ImplWin32_Shutdown();
+		ImGui::DestroyContext();
+	}
 
 	DestroyWindow(m_hWnd);
 	
@@ -166,13 +168,47 @@ void CGame::InitializeGameData()
 	}
 }
 
-void CGame::InitializeEditorAssets()
+void CGame::InitializeEditorAssets(bool bCreateEditor)
 {
+	if (!m_EnvironmentTexture)
+	{
+		// @important: use already mipmapped cubemap texture
+		m_EnvironmentTexture = make_unique<CTexture>(m_Device.Get(), m_DeviceContext.Get());
+		m_EnvironmentTexture->CreateCubeMapFromFile("Asset\\uffizi_environment.dds");
+		m_EnvironmentTexture->SetSlot(KEnvironmentTextureSlot);
+	}
+
+	if (!m_IrradianceTexture)
+	{
+		// @important: use already mipmapped cubemap texture
+		m_IrradianceTexture = make_unique<CTexture>(m_Device.Get(), m_DeviceContext.Get());
+		m_IrradianceTexture->CreateCubeMapFromFile("Asset\\uffizi_irradiance.dds");
+		m_IrradianceTexture->SetSlot(KIrradianceTextureSlot);
+	}
+
+	if (!m_PrefilteredRadianceTexture)
+	{
+		// @important: use already mipmapped cubemap texture
+		m_PrefilteredRadianceTexture = make_unique<CTexture>(m_Device.Get(), m_DeviceContext.Get());
+		m_PrefilteredRadianceTexture->CreateCubeMapFromFile("Asset\\uffizi_prefiltered_radiance.dds");
+		m_PrefilteredRadianceTexture->SetSlot(KPrefilteredRadianceTextureSlot);
+	}
+
+	if (!m_IntegratedBRDFTexture)
+	{
+		// @important: this is not cubemap nor mipmapped!
+		m_IntegratedBRDFTexture = make_unique<CTexture>(m_Device.Get(), m_DeviceContext.Get());
+		m_IntegratedBRDFTexture->CreateTextureFromFile("Asset\\integrated_brdf.dds", false);
+		m_IntegratedBRDFTexture->SetSlot(KIntegratedBRDFTextureSlot);
+	}
+
+	if (!bCreateEditor) return;
+
 	if (!m_BFNT_Identifiers)
 	{
 		m_BFNT_Identifiers = make_unique<CBFNTRenderer>(m_Device.Get(), m_DeviceContext.Get());
 		m_BFNT_Identifiers->Create("Asset\\D2Coding_16.bfnt", m_WindowSize);
-	}	
+	}
 
 	if (!m_Gizmo3D)
 	{
@@ -251,38 +287,6 @@ void CGame::InitializeEditorAssets()
 		{
 			m_IBLBaker = make_unique<CIBLBaker>(m_Device.Get(), m_DeviceContext.Get());
 			m_IBLBaker->Create();
-		}
-
-		if (!m_EnvironmentTexture)
-		{
-			// @important: use already mipmapped cubemap texture
-			m_EnvironmentTexture = make_unique<CTexture>(m_Device.Get(), m_DeviceContext.Get());
-			m_EnvironmentTexture->CreateCubeMapFromFile("Asset\\uffizi_environment.dds");
-			m_EnvironmentTexture->SetSlot(KEnvironmentTextureSlot);
-		}
-
-		if (!m_IrradianceTexture)
-		{
-			// @important: use already mipmapped cubemap texture
-			m_IrradianceTexture = make_unique<CTexture>(m_Device.Get(), m_DeviceContext.Get());
-			m_IrradianceTexture->CreateCubeMapFromFile("Asset\\uffizi_irradiance.dds");
-			m_IrradianceTexture->SetSlot(KIrradianceTextureSlot);
-		}
-
-		if (!m_PrefilteredRadianceTexture)
-		{
-			// @important: use already mipmapped cubemap texture
-			m_PrefilteredRadianceTexture = make_unique<CTexture>(m_Device.Get(), m_DeviceContext.Get());
-			m_PrefilteredRadianceTexture->CreateCubeMapFromFile("Asset\\uffizi_prefiltered_radiance.dds");
-			m_PrefilteredRadianceTexture->SetSlot(KPrefilteredRadianceTextureSlot);
-		}
-
-		if (!m_IntegratedBRDFTexture)
-		{
-			// @important: this is not cubemap nor mipmapped!
-			m_IntegratedBRDFTexture = make_unique<CTexture>(m_Device.Get(), m_DeviceContext.Get());
-			m_IntegratedBRDFTexture->CreateTextureFromFile("Asset\\integrated_brdf.dds", false);
-			m_IntegratedBRDFTexture->SetSlot(KIntegratedBRDFTextureSlot);
 		}
 
 		if (!m_EnvironmentCubemapRep)
@@ -1157,12 +1161,23 @@ void CGame::LoadScene(const std::string& FileName, const std::string& SceneConte
 
 	// Editor camera
 	{
-		m_EditorCamera->SetType((CCamera::EType)SceneBinaryData.ReadUint32());
-		SceneBinaryData.ReadXMVECTOR(ReadXMVECTOR);
-		m_EditorCamera->TranslateTo(ReadXMVECTOR);
-		m_EditorCamera->SetPitch(SceneBinaryData.ReadFloat());
-		m_EditorCamera->SetYaw(SceneBinaryData.ReadFloat());
-		m_EditorCamera->SetMovementFactor(SceneBinaryData.ReadFloat());
+		if (m_EditorCamera)
+		{
+			m_EditorCamera->SetType((CCamera::EType)SceneBinaryData.ReadUint32());
+			SceneBinaryData.ReadXMVECTOR(ReadXMVECTOR);
+			m_EditorCamera->TranslateTo(ReadXMVECTOR);
+			m_EditorCamera->SetPitch(SceneBinaryData.ReadFloat());
+			m_EditorCamera->SetYaw(SceneBinaryData.ReadFloat());
+			m_EditorCamera->SetMovementFactor(SceneBinaryData.ReadFloat());
+		}
+		else
+		{
+			SceneBinaryData.ReadUint32();
+			SceneBinaryData.ReadXMVECTOR(ReadXMVECTOR);
+			SceneBinaryData.ReadFloat();
+			SceneBinaryData.ReadFloat();
+			SceneBinaryData.ReadFloat();
+		}
 	}
 
 	// Camera
@@ -1186,10 +1201,13 @@ void CGame::LoadScene(const std::string& FileName, const std::string& SceneConte
 				SetPlayerCamera(Camera);
 			}
 
-			m_CameraRep->TranslateInstanceTo(ReadString, Camera->GetEyePosition());
-			m_CameraRep->RotateInstancePitchTo(ReadString, Camera->GetPitch());
-			m_CameraRep->RotateInstanceYawTo(ReadString, Camera->GetYaw());
-			m_CameraRep->UpdateInstanceWorldMatrix(ReadString);
+			if (m_CameraRep)
+			{
+				m_CameraRep->TranslateInstanceTo(ReadString, Camera->GetEyePosition());
+				m_CameraRep->RotateInstancePitchTo(ReadString, Camera->GetPitch());
+				m_CameraRep->RotateInstanceYawTo(ReadString, Camera->GetYaw());
+				m_CameraRep->UpdateInstanceWorldMatrix(ReadString);
+			}
 		}
 	}
 	
@@ -1218,7 +1236,7 @@ void CGame::LoadScene(const std::string& FileName, const std::string& SceneConte
 				InsertLight(InstanceCPUData.eType, InstanceCPUData.Name);
 
 				m_LightArray[(uint32_t)InstanceCPUData.eType]->SetInstanceGPUData(InstanceCPUData.Name, InstanceGPUData);
-				m_LightRep->SetInstancePosition(InstanceCPUData.Name, InstanceGPUData.Position);
+				if (m_LightRep) m_LightRep->SetInstancePosition(InstanceCPUData.Name, InstanceGPUData.Position);
 			}
 		}
 	}
@@ -1253,17 +1271,17 @@ void CGame::LoadScene(const std::string& FileName, const std::string& SceneConte
 		SceneBinaryData.ReadStringWithPrefixedLength(ReadString);
 		m_EnvironmentTexture->CreateCubeMapFromFile(ReadString);
 		m_EnvironmentTexture->SetSlot(KEnvironmentTextureSlot);
-		m_EnvironmentCubemapRep->UnfoldCubemap(m_EnvironmentTexture->GetShaderResourceViewPtr());
+		if (m_EnvironmentCubemapRep) m_EnvironmentCubemapRep->UnfoldCubemap(m_EnvironmentTexture->GetShaderResourceViewPtr());
 
 		SceneBinaryData.ReadStringWithPrefixedLength(ReadString);
 		m_IrradianceTexture->CreateCubeMapFromFile(ReadString);
 		m_IrradianceTexture->SetSlot(KIrradianceTextureSlot);
-		m_IrradianceCubemapRep->UnfoldCubemap(m_IrradianceTexture->GetShaderResourceViewPtr());
+		if (m_IrradianceCubemapRep) m_IrradianceCubemapRep->UnfoldCubemap(m_IrradianceTexture->GetShaderResourceViewPtr());
 
 		SceneBinaryData.ReadStringWithPrefixedLength(ReadString);
 		m_PrefilteredRadianceTexture->CreateCubeMapFromFile(ReadString);
 		m_PrefilteredRadianceTexture->SetSlot(KPrefilteredRadianceTextureSlot);
-		m_PrefilteredRadianceCubemapRep->UnfoldCubemap(m_PrefilteredRadianceTexture->GetShaderResourceViewPtr());
+		if (m_PrefilteredRadianceCubemapRep) m_PrefilteredRadianceCubemapRep->UnfoldCubemap(m_PrefilteredRadianceTexture->GetShaderResourceViewPtr());
 
 		SceneBinaryData.ReadStringWithPrefixedLength(ReadString);
 		m_IntegratedBRDFTexture->CreateCubeMapFromFile(ReadString);
@@ -2035,7 +2053,7 @@ void CGame::DeleteSelectedObjects()
 
 bool CGame::InsertCamera(const string& Name, CCamera::EType eType)
 {
-	if (Name == m_EditorCamera->GetName())
+	if (m_EditorCamera && Name == m_EditorCamera->GetName())
 	{
 		MB_WARN(GUI_STRING_MB(EGUIString_MB::UnusableName), GUI_STRING_MB(EGUIString_MB::CameraCreation));
 		return false;
@@ -2062,12 +2080,15 @@ bool CGame::InsertCamera(const string& Name, CCamera::EType eType)
 
 	m_mapCameraNameToIndex[Name] = m_vCameras.size() - 1;
 
-	m_CameraRep->InsertInstance(Name);
+	if (m_CameraRep)
+	{
+		m_CameraRep->InsertInstance(Name);
 
-	m_CameraRep->TranslateInstanceTo(Name, m_vCameras.back()->GetEyePosition());
-	m_CameraRep->RotateInstancePitchTo(Name, m_vCameras.back()->GetPitch());
-	m_CameraRep->RotateInstanceYawTo(Name, m_vCameras.back()->GetYaw());
-	m_CameraRep->UpdateInstanceWorldMatrix(Name);
+		m_CameraRep->TranslateInstanceTo(Name, m_vCameras.back()->GetEyePosition());
+		m_CameraRep->RotateInstancePitchTo(Name, m_vCameras.back()->GetPitch());
+		m_CameraRep->RotateInstanceYawTo(Name, m_vCameras.back()->GetYaw());
+		m_CameraRep->UpdateInstanceWorldMatrix(Name);
+	}
 
 	return true;
 }
@@ -2104,7 +2125,7 @@ void CGame::ClearCameras()
 	m_mapCameraNameToIndex.clear();
 	m_vCameras.clear();
 
-	m_CameraRep->ClearInstances();
+	if (m_CameraRep) m_CameraRep->ClearInstances();
 
 	UseEditorCamera();
 
@@ -2523,7 +2544,7 @@ void CGame::WalkPlayerToPickedPoint(float WalkSpeed)
 {
 	if (GetMode() == EMode::Edit) return;
 
-	if (!ImGui::IsAnyItemActive() && !ImGui::IsAnyWindowFocused() && !ImGui::IsAnyWindowHovered())
+	if (!ImGui::GetCurrentContext() || (!ImGui::IsAnyItemActive() && !ImGui::IsAnyWindowFocused() && !ImGui::IsAnyWindowHovered()))
 	{
 		if (m_bLeftButtonUpOnce)
 		{
@@ -2608,7 +2629,7 @@ bool CGame::InsertLight(CLight::EType eType, const std::string& Name)
 
 	if (m_LightArray[(uint32_t)eType]->InsertInstance(InstanceName))
 	{
-		m_LightRep->InsertInstance(InstanceName);
+		if (m_LightRep) m_LightRep->InsertInstance(InstanceName);
 		return true;
 	}
 	return false;
@@ -2633,7 +2654,7 @@ void CGame::ClearLights()
 	{
 		Light->ClearInstances();
 	}
-	m_LightRep->ClearInstances();
+	if (m_LightRep) m_LightRep->ClearInstances();
 }
 
 bool CGame::InsertPattern(const std::string& FileName)
@@ -3267,12 +3288,15 @@ void CGame::DeselectType(EObjectType eObjectType)
 		break;
 	case CGame::EObjectType::Camera:
 		m_umapSelectionCamera.clear();
-		m_CameraRep->SetAllInstancesHighlightOff();
+		if (m_CameraRep) m_CameraRep->SetAllInstancesHighlightOff();
 		break;
 	case CGame::EObjectType::Light:
 		m_umapSelectionLight.clear();
-		m_LightRep->SetAllInstancesHighlightOff();
-		m_LightRep->UpdateInstanceBuffer();
+		if (m_LightRep)
+		{
+			m_LightRep->SetAllInstancesHighlightOff();
+			m_LightRep->UpdateInstanceBuffer();
+		}
 		break;
 	}
 }
@@ -3290,10 +3314,13 @@ void CGame::DeselectAll()
 	m_umapSelectionCamera.clear();
 	m_umapSelectionLight.clear();
 
-	m_CameraRep->SetAllInstancesHighlightOff();
+	if (m_CameraRep) m_CameraRep->SetAllInstancesHighlightOff();
 
-	m_LightRep->SetAllInstancesHighlightOff();
-	m_LightRep->UpdateInstanceBuffer();
+	if (m_LightRep)
+	{
+		m_LightRep->SetAllInstancesHighlightOff();
+		m_LightRep->UpdateInstanceBuffer();
+	}
 }
 
 bool CGame::IsAnythingSelected() const
@@ -3586,6 +3613,7 @@ CCamera* CGame::GetPlayerCamera() const
 
 bool CGame::IsEditorCamera(CCamera* const Camera) const
 {
+	if (!m_EditorCamera) return false;
 	return m_EditorCamera.get() == Camera;
 }
 
@@ -3999,7 +4027,7 @@ void CGame::Update()
 
 			if (!IsEditorCamera(GetCurrentCamera()))
 			{
-				m_CameraRep->UpdateInstanceWorldMatrix(GetCurrentCamera()->GetName(), GetCurrentCamera()->GetWorldMatrix());
+				if (m_CameraRep) m_CameraRep->UpdateInstanceWorldMatrix(GetCurrentCamera()->GetName(), GetCurrentCamera()->GetWorldMatrix());
 			}
 		}
 	}
@@ -4010,7 +4038,7 @@ void CGame::Update()
 
 		if (!IsEditorCamera(GetCurrentCamera()))
 		{
-			m_CameraRep->UpdateInstanceWorldMatrix(GetCurrentCamera()->GetName(), GetCurrentCamera()->GetWorldMatrix());
+			if (m_CameraRep) m_CameraRep->UpdateInstanceWorldMatrix(GetCurrentCamera()->GetName(), GetCurrentCamera()->GetWorldMatrix());
 		}
 	}
 

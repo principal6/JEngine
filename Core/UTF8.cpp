@@ -3,11 +3,25 @@
 #include <Windows.h>
 #include <cassert>
 
-uint32_t ConvertToUTF8(wchar_t Char)
+uint32_t ConvertWideToUTF8(wchar_t Char)
 {
 	UUTF8_ID Result{};
 	WideCharToMultiByte(CP_UTF8, 0, &Char, 1, Result.Chars, 4, nullptr, nullptr);
 	return Result.ID;
+}
+
+void ConvertWideToUTF8(const wchar_t* const WideString, char** OutUTF8String)
+{
+	int ByteCount{ WideCharToMultiByte(CP_UTF8, 0, WideString, (int)wcslen(WideString), nullptr, 0, 0, 0) };
+	*OutUTF8String = new char[(size_t)ByteCount + 1] {};
+	WideCharToMultiByte(CP_UTF8, 0, WideString, (int)wcslen(WideString), *OutUTF8String, ByteCount, 0, 0);
+}
+
+void ConvertUTF8ToWide(const char* const UTF8String, wchar_t** OutWideString)
+{
+	int Length{ MultiByteToWideChar(CP_UTF8, 0, UTF8String, (int)strlen(UTF8String), nullptr, 0) };
+	*OutWideString = new wchar_t[(size_t)Length + 1]{};
+	MultiByteToWideChar(CP_UTF8, 0, UTF8String, (int)strlen(UTF8String), *OutWideString, Length);
 }
 
 uint32_t GetUTF8CharacterByteCount(char FirstCharacter)

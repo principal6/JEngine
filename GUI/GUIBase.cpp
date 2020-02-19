@@ -389,14 +389,14 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 					if (!m_bIsIMECompositingPrev && m_bIsIMECompositing)
 					{
 						wchar_t wChar{ (wchar_t)NewEvent.Extra };
-						UUTF8_ID utf8{ ConvertToUTF8(wChar) };
+						UUTF8_ID utf8{ ConvertWideToUTF8(wChar) };
 						TextEdit->InsertChar(utf8.Chars);
 					}
 					else if (m_bIsIMECompositingPrev && m_bIsIMECompositing)
 					{
 						TextEdit->DeletePreChar();
 						wchar_t wChar{ (wchar_t)NewEvent.Extra };
-						UUTF8_ID utf8{ ConvertToUTF8(wChar) };
+						UUTF8_ID utf8{ ConvertWideToUTF8(wChar) };
 						TextEdit->InsertChar(utf8.Chars);
 					}
 				}
@@ -426,7 +426,7 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 					}
 					else if (wChar >= (wchar_t)0x20)
 					{
-						UUTF8_ID utf8{ ConvertToUTF8(wChar) };
+						UUTF8_ID utf8{ ConvertWideToUTF8(wChar) };
 						TextEdit->InsertChar(utf8.Chars);
 					}
 				}
@@ -493,8 +493,23 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 		{
 			if (Widget->IsMouseInside(MousePosition))
 			{
-				NewEvent.Widget = Widget;
-
+				if (Widget->GetType() == EWidgetType::Window)
+				{
+					if (((CWindow*)Widget)->IsOpen()) NewEvent.Widget = Widget;
+				}
+				else
+				{
+					CWidget* const Parent{ Widget->GetParent() };
+					if (Parent && Parent->GetType() == EWidgetType::Window)
+					{
+						if (((CWindow*)Parent)->IsOpen()) NewEvent.Widget = Widget;
+					}
+					else
+					{
+						NewEvent.Widget = Widget;
+					}
+				}
+				
 				if (NewEvent.eEventType == EEventType::Clicked)
 				{
 					m_FocusedWidget = Widget;
@@ -565,7 +580,7 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 				}
 				NewEvent.Widget = Widget;
 			}
-			else if (Window->IsMouseOnTitleBar(MousePosition))
+			else if (Window->IsOpen() && Window->IsMouseOnTitleBar(MousePosition))
 			{
 				if (NewEvent.eEventType == EEventType::MouseDown)
 				{
@@ -584,13 +599,24 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 		m_EventQueue.emplace_back(NewEvent);
 		return true;
 	}
-
-	if (NewEvent.eEventType == EEventType::MouseDown) m_LastMouseDownWidget = nullptr;
+	else
+	{
+		if (NewEvent.eEventType == EEventType::MouseDown)
+		{
+			m_LastMouseDownWidget = nullptr;
+			m_FocusedWidget = nullptr;
+		}
+	}
 	return false;
 }
 
 void CGUIBase::Render() const
 {
+	ID3D11RasterizerState* OldRSState{};
+	ID3D11Buffer* OldVSConstantBuffer{};
+	m_PtrDeviceContext->VSGetConstantBuffers(0, 1, &OldVSConstantBuffer);
+	m_PtrDeviceContext->RSGetState(&OldRSState);
+
 	m_PtrDeviceContext->RSSetState(m_RS.Get());
 
 	WINDOWINFO info{};
@@ -599,6 +625,7 @@ void CGUIBase::Render() const
 		(float)(info.rcClient.right - info.rcClient.left),
 		(float)(info.rcClient.bottom - info.rcClient.top)
 	);
+	if (m_WindowSize.X == 0 || m_WindowSize.Y == 0) return;
 	m_CBSpaceData.Projection = XMMatrixOrthographicLH(m_WindowSize.X, m_WindowSize.Y, 0, 1);
 
 	if (m_Atlas)
@@ -621,4 +648,7 @@ void CGUIBase::Render() const
 
 		Widget->Draw();
 	}
+
+	m_PtrDeviceContext->VSSetConstantBuffers(0, 1, &OldVSConstantBuffer);
+	m_PtrDeviceContext->RSSetState(OldRSState);
 }

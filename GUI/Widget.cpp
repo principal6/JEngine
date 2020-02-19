@@ -6,6 +6,7 @@
 #include "../Core/ConstantBuffer.h"
 
 using std::string;
+using std::wstring;
 using std::min;
 using std::max;
 using std::make_unique;
@@ -776,8 +777,10 @@ void CTextEdit::_Draw() const
 	}
 }
 
-void CTextEdit::InsertChar(const std::string& UTF8_Char)
+bool CTextEdit::InsertChar(const std::string& UTF8_Char)
 {
+	if (GetUTF8StringLength(m_Caption.c_str()) >= KMaxStringLength) return false;
+
 	string _UTF8_Char{ UTF8_Char };
 	size_t ByteCount{ GetUTF8CharacterByteCount(_UTF8_Char[0]) };
 	if (_UTF8_Char.size() > ByteCount) _UTF8_Char = _UTF8_Char.substr(0, ByteCount);
@@ -794,6 +797,7 @@ void CTextEdit::InsertChar(const std::string& UTF8_Char)
 		m_Caption = UTF8_Char;
 	}
 	MoveCaret(EDirection::Right);
+	return true;
 }
 
 void CTextEdit::InsertString(const std::string& UTF8_String)
@@ -802,7 +806,7 @@ void CTextEdit::InsertString(const std::string& UTF8_String)
 	while (ByteAt < UTF8_String.size())
 	{
 		size_t ByteCount{ GetUTF8CharacterByteCount(UTF8_String[ByteAt]) };
-		InsertChar(UTF8_String.substr(ByteAt, ByteCount));
+		if (!InsertChar(UTF8_String.substr(ByteAt, ByteCount))) return;
 		ByteAt += ByteCount;
 	}
 }
@@ -1120,30 +1124,44 @@ std::string CTextEdit::GetSelection() const
 
 bool CTextEdit::CopyToClipboard()
 {
+	bool bResult{ false };
 	if (HasSelection() && OpenClipboard(nullptr))
 	{
-		uint32_t ByteLength{ GetSelectionByteLength() };
-		HGLOBAL Mem{ GlobalAlloc(GMEM_MOVEABLE, ByteLength + 1) };
-		if (Mem)
+		size_t WideStringLength{ GetSelectionLength() };
+		wchar_t* _WideString{};
+		ConvertUTF8ToWide(GetSelection().c_str(), &_WideString);
+		wstring WideString{ _WideString };
+		if (_WideString)
 		{
-			char* Copy{ (char*)GlobalLock(Mem) };
-			memcpy(Copy, GetSelection().c_str(), ByteLength * sizeof(char));
-			Copy[ByteLength] = 0;    // null character 
-			GlobalUnlock(Copy);
+			delete[] _WideString;
+			_WideString = nullptr;
+		}
+		
+		HGLOBAL Memory{ GlobalAlloc(GMEM_MOVEABLE, (WideString.size() + 1) * sizeof(wchar_t)) };
+		if (Memory)
+		{
+			wchar_t* Locked{ (wchar_t*)GlobalLock(Memory) };
+			if (Locked)
+			{
+				memcpy(Locked, WideString.c_str(), WideString.size() * sizeof(wchar_t));
+				Locked[WideString.size()] = 0;    // null character 
 
-			EmptyClipboard();
+				GlobalUnlock(Locked);
 
-			SetClipboardData(CF_TEXT, Mem);
+				EmptyClipboard();
 
-			GlobalFree(Mem);
+				SetClipboardData(CF_UNICODETEXT, Memory);
 
-			return true;
+				bResult = true;
+			}
+
+			GlobalFree(Memory);
 		}
 
 		CloseClipboard();
 	}
 
-	return false;
+	return bResult;
 }
 
 bool CTextEdit::CutToClipboard()
@@ -1158,31 +1176,41 @@ bool CTextEdit::CutToClipboard()
 
 bool CTextEdit::PasteFromClipboard()
 {
+	bool bResult{ false };
 	if (OpenClipboard(nullptr))
 	{
-		HANDLE ClipboardData{ GetClipboardData(CF_TEXT) };
-		char* Mem{ (char*)GlobalLock(ClipboardData) };
-		if (Mem)
+		HANDLE ClipboardData{ GetClipboardData(CF_UNICODETEXT) };
+		wchar_t* Locked{ (wchar_t*)GlobalLock(ClipboardData) };
+		if (Locked)
 		{
-			string str{};
-			size_t len{ strlen(Mem) };
-			for (size_t i = 0; i < len; ++i)
+			wstring WideString{};
+			size_t WideStringLength{ wcslen(Locked) };
+			for (size_t i = 0; i < WideStringLength; ++i)
 			{
-				str += Mem[i];
+				WideString += Locked[i];
 			}
-			GlobalUnlock(Mem);
+			GlobalUnlock(Locked);
 
 			DeleteSelection();
 
-			InsertString(str);
+			char* UTF8{};
+			ConvertWideToUTF8(WideString.c_str(), &UTF8);
+			string UTF8String{ UTF8 };
+			if (UTF8)
+			{
+				delete[] UTF8;
+				UTF8 = nullptr;
+			}
 
-			return true;
+			InsertString(UTF8String);
+
+			bResult = true;
 		}
 
 		CloseClipboard();
 	}
 
-	return false;
+	return bResult;
 }
 
 uint32_t CTextEdit::_GetCaretAtFromMousePosition(const SInt2& MousePosition) const

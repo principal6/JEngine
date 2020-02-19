@@ -27,6 +27,16 @@ CBFNTBaker::~CBFNTBaker()
 {
 }
 
+void CBFNTBaker::ClearCharRanges()
+{
+	m_vCharRanges.clear();
+}
+
+void CBFNTBaker::AddCharRange(const SCharRange& Range)
+{
+	m_vCharRanges.emplace_back(Range);
+}
+
 void CBFNTBaker::BakeFont(const char* FontFileName, uint32_t FontSize, const char* OutDirectory)
 {
 	string _FontFileName{ FontFileName };
@@ -79,34 +89,39 @@ void CBFNTBaker::BakeFont(const char* FontFileName, uint32_t FontSize, const cha
 	// @important: wchar_t
 	assert(FT_Select_Charmap(ftFace, FT_ENCODING_UNICODE) == FT_Err_Ok);
 	
-	for (wchar_t wch = 0; wch <= L'ÆR'; ++wch)
+	if (m_vCharRanges.empty()) AddCharRange(m_DefaultCharRange);
+
+	for (const auto& CharRange : m_vCharRanges)
 	{
-		assert(FT_Load_Char(ftFace, wch, FT_LOAD_RENDER) == FT_Err_Ok);
-
-		m_vGlyphData.emplace_back();
-		
-		auto& GlyphMetrics{ m_vGlyphData.back().GlyphMetrics };
-		auto& Glyph{ m_vGlyphData.back().Glyph };
-
-		GlyphMetrics.ID_UTF8	= ConvertToUTF8(wch);
-		GlyphMetrics.Width		= ftFace->glyph->metrics.width			>> 6;
-		GlyphMetrics.Height		= ftFace->glyph->metrics.height			>> 6;
-		GlyphMetrics.XAdvance	= ftFace->glyph->metrics.horiAdvance	>> 6;
-		GlyphMetrics.XBearing	= ftFace->glyph->metrics.horiBearingX	>> 6;
-		GlyphMetrics.YBearing	= ftFace->glyph->metrics.horiBearingY	>> 6;
-		
-		// @vertical metrics are not used
-		//ftFace->glyph->metrics.vertAdvance;
-		//ftFace->glyph->metrics.vertBearingX;
-		//ftFace->glyph->metrics.vertBearingY;
-
-		uint32_t PixelCount{ GlyphMetrics.Width * GlyphMetrics.Height };
-		Glyph.vPixels.resize(PixelCount);
-		for (uint32_t iPixel = 0; iPixel < PixelCount; ++iPixel)
+		for (wchar_t wch = CharRange.StartCharID; wch <= CharRange.EndCharID; ++wch)
 		{
-			// Gray to RGBA
-			uint8_t SourceAlpha{ ftFace->glyph->bitmap.buffer[iPixel] };
-			Glyph.vPixels[iPixel].A = SourceAlpha;
+			assert(FT_Load_Char(ftFace, wch, FT_LOAD_RENDER) == FT_Err_Ok);
+
+			m_vGlyphData.emplace_back();
+
+			auto& GlyphMetrics{ m_vGlyphData.back().GlyphMetrics };
+			auto& Glyph{ m_vGlyphData.back().Glyph };
+
+			GlyphMetrics.ID_UTF8 = ConvertWideToUTF8(wch);
+			GlyphMetrics.Width = ftFace->glyph->metrics.width >> 6;
+			GlyphMetrics.Height = ftFace->glyph->metrics.height >> 6;
+			GlyphMetrics.XAdvance = ftFace->glyph->metrics.horiAdvance >> 6;
+			GlyphMetrics.XBearing = ftFace->glyph->metrics.horiBearingX >> 6;
+			GlyphMetrics.YBearing = ftFace->glyph->metrics.horiBearingY >> 6;
+
+			// @vertical metrics are not used
+			//ftFace->glyph->metrics.vertAdvance;
+			//ftFace->glyph->metrics.vertBearingX;
+			//ftFace->glyph->metrics.vertBearingY;
+
+			uint32_t PixelCount{ GlyphMetrics.Width * GlyphMetrics.Height };
+			Glyph.vPixels.resize(PixelCount);
+			for (uint32_t iPixel = 0; iPixel < PixelCount; ++iPixel)
+			{
+				// Gray to RGBA
+				uint8_t SourceAlpha{ ftFace->glyph->bitmap.buffer[iPixel] };
+				Glyph.vPixels[iPixel].A = SourceAlpha;
+			}
 		}
 	}
 

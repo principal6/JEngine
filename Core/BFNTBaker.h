@@ -4,6 +4,9 @@
 
 struct SCharRange
 {
+	SCharRange() {};
+	SCharRange(wchar_t _StartCharID, wchar_t _EndCharID) : StartCharID{ _StartCharID }, EndCharID{ _EndCharID } {};
+
 	wchar_t	StartCharID{};
 	wchar_t	EndCharID{};
 };
@@ -36,6 +39,10 @@ public:
 	~CBFNTBaker();
 
 public:
+	void ClearCharRanges();
+	void AddCharRange(const SCharRange& Range);
+
+public:
 	void BakeFont(const char* FontFileName, uint32_t FontSize, const char* OutDirectory);
 
 private:
@@ -48,6 +55,10 @@ private:
 	void _RenderGlyphToImage(uint32_t GlyphIndex, uint32_t X, uint32_t Y);
 
 private:
+	std::vector<SCharRange> m_vCharRanges{};
 	std::vector<SGlyphData>	m_vGlyphData{};
 	SImage					m_Image{};
+
+private:
+	SCharRange				m_DefaultCharRange{ 0, 0xFF };
 };
