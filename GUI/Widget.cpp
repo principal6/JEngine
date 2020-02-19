@@ -180,6 +180,16 @@ CWidget* CWidget::GetChild(const std::string& Name) const
 	return nullptr;
 }
 
+bool CWidget::HasParent() const
+{
+	return GetParent();
+}
+
+bool CWidget::HasChild() const
+{
+	return GetChildCount();
+}
+
 bool CWidget::IsChild(const std::string& Name) const
 {
 	return (m_umapChildNameToIndex.find(Name) != m_umapChildNameToIndex.end());
@@ -347,14 +357,14 @@ CButton::~CButton()
 void CButton::Create(const std::string& Name, const SInt2& Size, CWidget* const Parent)
 {
 	_Create(EWidgetType::Button, Name, Size, Parent);
-	m_Primitive2D.CreateShape(m_Size, SFloat4(1, 1, 1, 1), KDefaultRoundness);
+	m_Primitive2D.CreateRectangle(m_Size, SFloat4(1, 1, 1, 1), KDefaultRoundness);
 }
 
 void CButton::CreatePreset(const std::string& Name, const SInt2& Size, EButtonPreset ePreset, CWidget* const Parent)
 {
 	_Create(EWidgetType::Button, Name, Size, Parent);
 
-	m_Primitive2D.CreateShape(m_Size, SFloat4(1, 1, 1, 1), KDefaultRoundness);
+	m_Primitive2D.CreateRectangle(m_Size, SFloat4(1, 1, 1, 1), KDefaultRoundness);
 
 	m_PresetPrimitive = make_unique<CPrimitive2D>(m_PtrDevice, m_PtrDeviceContext);
 	switch (ePreset)
@@ -533,10 +543,10 @@ void CWindow::CreateImage(const std::string& Name, const SInt2& Size, const SFlo
 void CWindow::CreatePrimitive(const std::string& Name, const SInt2& Size, float Roundness, CWidget* const Parent)
 {
 	_Create(EWidgetType::Window, Name, Size, Parent);
-	m_Primitive2D.CreateShape(m_Size, KDefaultWindowBackgroundColor, Roundness);
+	m_Primitive2D.CreateRectangle(m_Size, KDefaultWindowBackgroundColor, Roundness);
 
 	m_TitleBarPrimitive = make_unique<CPrimitive2D>(m_PtrDevice, m_PtrDeviceContext);
-	m_TitleBarPrimitive->CreateShape(SInt2(Size.X, KDefaultTitleBarHeight), KDefaultTitleBarActiveColor, Roundness, true);
+	m_TitleBarPrimitive->CreateRectangle(SInt2(Size.X, KDefaultTitleBarHeight), KDefaultTitleBarActiveColor, Roundness, true);
 	SetTitleBar(SInt2(0, 0), SInt2(Size.X - KDefaultTitleBarHeight, KDefaultTitleBarHeight));
 
 	m_NewChildrenOffset.Y = KDefaultTitleBarHeight;
@@ -625,7 +635,7 @@ CText::~CText()
 void CText::Create(const std::string& Name, const SInt2& Size, CWidget* const Parent)
 {
 	_Create(EWidgetType::Text, Name, Size, Parent);
-	m_Primitive2D.CreateShape(m_Size, SFloat4(0, 0, 0, 0));
+	m_Primitive2D.CreateRectangle(m_Size, SFloat4(0, 0, 0, 0));
 }
 
 void CText::_Draw() const
@@ -636,7 +646,7 @@ void CText::_Draw() const
 
 void CText::SetBackgroundColor(const SFloat4& Color)
 {
-	m_Primitive2D.CreateShape(m_Size, Color);
+	m_Primitive2D.CreateRectangle(m_Size, Color);
 }
 
 void CText::_SetActive()
@@ -663,7 +673,7 @@ void CTextEdit::Create(const std::string& Name, const SInt2& Size, CWidget* cons
 {
 	_Create(EWidgetType::TextEdit, Name, Size, Parent);
 
-	m_Primitive2D.CreateShape(m_Size, KDefaultTextEditBackgroundColor);
+	m_Primitive2D.CreateRectangle(m_Size, KDefaultTextEditBackgroundColor);
 
 	const auto& FontData{ m_BFNTRenderer->GetData() };
 	m_CaretPrimitive = make_unique<CPrimitive2D>(m_PtrDevice, m_PtrDeviceContext);
@@ -674,6 +684,9 @@ void CTextEdit::Create(const std::string& Name, const SInt2& Size, CWidget* cons
 		}
 	);
 
+	m_SelectionPrimitive = make_unique<CPrimitive2D>(m_PtrDevice, m_PtrDeviceContext);
+	m_SelectionPrimitive->CreateRectangle(SInt2(10, FontData.LineHeight), KDefaultSelectionColor);
+
 	SetCaptionAlign(EHorzAlign::Left, EVertAlign::Top);
 	SetCaptionColor(KDefaultFontColor);
 	MoveCaret(EDirection::Left);
@@ -683,8 +696,10 @@ void CTextEdit::_Draw() const
 {
 	static const steady_clock Clock{};
 
+	// Draw background
 	m_Primitive2D.Draw();
 
+	// Draw text
 	{
 		UINT OldCount{};
 		D3D11_RECT* OldRects{};
@@ -706,33 +721,57 @@ void CTextEdit::_Draw() const
 		m_PtrDeviceContext->RSSetScissorRects(OldCount, OldRects);
 	}
 
-	m_PtrVS->Use();
-	m_PtrPS->Use();
-	m_PtrCBSpace->Use(EShaderType::VertexShader, 0);
-	
 	if (m_bIsFocused)
 	{
-		uint32_t Now_ms{ (uint32_t)(Clock.now().time_since_epoch().count() / 1'000'000) };
-		if (m_PrevTimePoint_ms == 0) m_PrevTimePoint_ms = Now_ms;
-		uint32_t DeltaTime_ms{ Now_ms - m_PrevTimePoint_ms };
+		const int32_t StringWidth{ (int32_t)m_BFNTRenderer->CalculateStringWidth(m_Caption.c_str()) };
+		const int32_t AlignOffsetX{ (m_eCaptionHorzAlign == EHorzAlign::Center) ? (m_Size.X / 2) - (StringWidth / 2) : 0 };
 
-		m_CaretTimer += DeltaTime_ms;
-		uint32_t CaretBlinkTime{ *m_PtrCaretBlinkTime };
-		if (m_CaretTimer <= CaretBlinkTime)
+		float OldSpaceOffsetX{ m_PtrCBSpaceData->Offset.x };
+		float OldSpaceOffsetY{ m_PtrCBSpaceData->Offset.y };
+
+		m_PtrVS->Use();
+		m_PtrPS->Use();
+		m_PtrCBSpace->Use(EShaderType::VertexShader, 0);
+
+		// Draw selection
+		if (HasSelection())
 		{
-			int32_t StringWidth{ (int32_t)m_BFNTRenderer->CalculateStringWidth(m_Caption.c_str()) };
-			int32_t AlignOffsetX{ (m_eCaptionHorzAlign == EHorzAlign::Center) ? (m_Size.X / 2) - (StringWidth / 2) : 0 };
-			m_PtrCBSpaceData->Offset.x += m_CaretOffsetX + m_StringOffsetX + AlignOffsetX;
+			if (m_CaretAt == m_SelectionStart)
+			{
+				m_PtrCBSpaceData->Offset.x = OldSpaceOffsetX + KSpaceHorz + m_CaretOffsetX + m_StringOffsetX + AlignOffsetX;
+			}
+			else // m_CaretAt == m_SelectionEnd
+			{
+				m_PtrCBSpaceData->Offset.x = OldSpaceOffsetX + KSpaceHorz + m_CaretOffsetX + m_StringOffsetX + AlignOffsetX - m_SelectionWidth;
+			}
+			m_PtrCBSpaceData->Offset.y = OldSpaceOffsetY - KSpaceVert;
+
 			m_PtrCBSpace->Update();
 
-			m_CaretPrimitive->Draw();
-		}
-		else if (m_CaretTimer > CaretBlinkTime * 2)
-		{
-			m_CaretTimer = 0;
+			m_SelectionPrimitive->Draw();
 		}
 
-		m_PrevTimePoint_ms = Now_ms;
+		// Draw caret
+		{
+			const uint32_t Now_ms{ (uint32_t)(Clock.now().time_since_epoch().count() / 1'000'000) };
+			const uint32_t DeltaTime_ms{ Now_ms - m_PrevTimePoint_ms };
+			const uint32_t CaretBlinkTime{ *m_PtrCaretBlinkTime };
+			m_CaretTimer += DeltaTime_ms;
+			if (m_CaretTimer <= CaretBlinkTime)
+			{
+				m_PtrCBSpaceData->Offset.x = OldSpaceOffsetX + m_CaretOffsetX + m_StringOffsetX + AlignOffsetX;
+				m_PtrCBSpaceData->Offset.y = OldSpaceOffsetY;
+				m_PtrCBSpace->Update();
+
+				m_CaretPrimitive->Draw();
+			}
+			else if (m_CaretTimer > CaretBlinkTime * 2)
+			{
+				m_CaretTimer = 0;
+			}
+
+			m_PrevTimePoint_ms = Now_ms;
+		}
 	}
 }
 
@@ -752,24 +791,17 @@ void CTextEdit::InsertChar(const std::string& UTF8_Char)
 	MoveCaret(EDirection::Right);
 }
 
-void CTextEdit::MoveCaret(EDirection eDirection)
+void CTextEdit::MoveCaret(EDirection eDirection, bool bShouldDeselect)
 {
-	const int32_t _SizeX{ m_Size.X - KSpaceHorz * 2 };
-	if (eDirection == EDirection::Right)
+	if (bShouldDeselect)
 	{
-		if (m_CaretAt < (uint32_t)GetUTF8StringLength(m_Caption.c_str()))
-		{
-			++m_CaretAt;
-			m_CaretTimer = 0;
-
-			size_t ByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt) };
-			m_CaretOffsetX = (int32_t)m_BFNTRenderer->CalculateStringWidth(m_Caption.substr(0, ByteAt).c_str());
-			int32_t DeltaStringOffsetX{ (_SizeX - m_CaretOffsetX < 0) ? _SizeX - m_CaretOffsetX - m_StringOffsetX : 0 };
-			m_StringOffsetX += DeltaStringOffsetX;
-		}
+		Deselect();
 	}
-	else if (eDirection == EDirection::Left)
+
+	const int32_t _SizeX{ m_Size.X - KSpaceHorz * 2 };
+	switch (eDirection)
 	{
+	case CTextEdit::EDirection::Left:
 		if (m_CaretAt > 0)
 		{
 			--m_CaretAt;
@@ -780,28 +812,189 @@ void CTextEdit::MoveCaret(EDirection eDirection)
 			int32_t DeltaStringOffsetX{ (m_CaretOffsetX < abs(m_StringOffsetX)) ? abs(m_StringOffsetX) - m_CaretOffsetX : 0 };
 			m_StringOffsetX += DeltaStringOffsetX;
 		}
-	}
-	else if (eDirection == EDirection::Home)
-	{
+		break;
+	case CTextEdit::EDirection::Right:
+		if (m_CaretAt < (uint32_t)GetUTF8StringLength(m_Caption.c_str()))
+		{
+			++m_CaretAt;
+			m_CaretTimer = 0;
+
+			size_t ByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt) };
+			m_CaretOffsetX = (int32_t)m_BFNTRenderer->CalculateStringWidth(m_Caption.substr(0, ByteAt).c_str());
+			int32_t DeltaStringOffsetX{ (_SizeX - m_CaretOffsetX - m_StringOffsetX < 0) ? _SizeX - m_CaretOffsetX - m_StringOffsetX : 0 };
+			m_StringOffsetX += DeltaStringOffsetX;
+		}
+		break;
+	case CTextEdit::EDirection::Home:
 		m_CaretAt = 0;
 		m_CaretTimer = 0;
 
 		m_CaretOffsetX = 0;
 		m_StringOffsetX = 0;
-	}
-	else if (eDirection == EDirection::End)
-	{
+		break;
+	case CTextEdit::EDirection::End:
 		m_CaretAt = (uint32_t)GetUTF8StringLength(m_Caption.c_str());
 		m_CaretTimer = 0;
 
 		m_CaretOffsetX = (int32_t)m_BFNTRenderer->CalculateStringWidth(m_Caption.c_str());
 		m_StringOffsetX = ((_SizeX - m_CaretOffsetX < 0) ? _SizeX - m_CaretOffsetX : 0);
+		break;
+	default:
+		break;
 	}
 
 	if (m_eCaptionHorzAlign == EHorzAlign::Center)
 	{
 		m_StringOffsetX = -KSpaceHorz;
 	}
+}
+
+void CTextEdit::MoveCaretTo(const SInt2& MousePosition)
+{
+	SInt2 ClientPosition{ MousePosition.X - (m_Position.X + m_Offset.X), MousePosition.Y + (m_Position.Y + m_Offset.Y) };
+	if (HasParent())
+	{
+		const auto& ParentPosition{ GetParent()->GetPosition() };
+		const auto& ParentOffset{ GetParent()->GetOffset() };
+		ClientPosition.X -= (ParentPosition.X + ParentOffset.X);
+		ClientPosition.Y += (ParentPosition.Y + ParentOffset.Y);
+	}
+	int32_t OffsetX{ ClientPosition.X - m_StringOffsetX };
+	uint32_t NewCaretAt{ m_BFNTRenderer->CalculateCharacterAtFromOffsetX(m_Caption.c_str(), OffsetX) };
+	if (NewCaretAt < m_CaretAt)
+	{
+		while (NewCaretAt < m_CaretAt)
+		{
+			MoveCaret(EDirection::Left);
+		}
+	}
+	else if (NewCaretAt > m_CaretAt)
+	{
+		while (NewCaretAt > m_CaretAt)
+		{
+			MoveCaret(EDirection::Right);
+		}
+	}
+}
+
+void CTextEdit::Select(EDirection eDirection)
+{
+	switch (eDirection)
+	{
+	case CTextEdit::EDirection::Left:
+	{
+		uint32_t OldCaretAt{ m_CaretAt };
+		MoveCaret(EDirection::Left, false);
+		if (m_CaretAt != OldCaretAt)
+		{
+			if (m_SelectionStart == m_SelectionEnd)
+			{
+				m_SelectionStart = m_CaretAt;
+				m_SelectionEnd = OldCaretAt;
+			}
+			else
+			{
+				if (m_CaretAt < m_SelectionStart)
+				{
+					--m_SelectionStart;
+				}
+				else
+				{
+					--m_SelectionEnd;
+				}
+			}
+		}
+		break;
+	}
+	case CTextEdit::EDirection::Right:
+	{
+		uint32_t OldCaretAt{ m_CaretAt };
+		MoveCaret(EDirection::Right, false);
+		if (m_CaretAt != OldCaretAt)
+		{
+			if (m_SelectionStart == m_SelectionEnd)
+			{
+				m_SelectionStart = OldCaretAt;
+				m_SelectionEnd = m_CaretAt;
+			}
+			else
+			{
+				if (m_CaretAt > m_SelectionEnd)
+				{
+					++m_SelectionEnd;
+				}
+				else
+				{
+					++m_SelectionStart;
+				}
+			}
+		}
+		break;
+	}
+	case CTextEdit::EDirection::Home:
+	{
+		uint32_t OldCaretAt{ m_CaretAt };
+		MoveCaret(EDirection::Home, false);
+		if (m_CaretAt != OldCaretAt)
+		{
+			if (m_SelectionStart == m_SelectionEnd)
+			{
+				m_SelectionEnd = OldCaretAt;
+			}
+			else
+			{
+				if (OldCaretAt > m_SelectionStart)
+				{
+					m_SelectionEnd = m_SelectionStart;
+				}
+			}
+			m_SelectionStart = 0;
+		}
+		break;
+	}
+	case CTextEdit::EDirection::End:
+	{
+		uint32_t OldCaretAt{ m_CaretAt };
+		MoveCaret(EDirection::End, false);
+		if (m_CaretAt != OldCaretAt)
+		{
+			if (m_SelectionStart == m_SelectionEnd)
+			{
+				m_SelectionStart = OldCaretAt;
+			}
+			else
+			{
+				if (OldCaretAt < m_SelectionEnd)
+				{
+					m_SelectionStart = m_SelectionEnd;
+				}
+			}
+			m_SelectionEnd = m_CaretAt;
+		}
+		break;
+	}
+	default:
+		return; // @
+	}
+
+	if (HasSelection())
+	{
+		size_t SelectionStartByte{ ConvertStringAtToByteAt(m_Caption.c_str(), m_SelectionStart) };
+		size_t SelectionEndByte{ ConvertStringAtToByteAt(m_Caption.c_str(), m_SelectionEnd) };
+		int32_t SelectionStartWidth{ (int32_t)m_BFNTRenderer->CalculateStringWidth(m_Caption.substr(0, SelectionStartByte).c_str()) };
+		int32_t SelectionEndWidth{ (int32_t)m_BFNTRenderer->CalculateStringWidth(m_Caption.substr(0, SelectionEndByte).c_str()) };
+		m_SelectionWidth = SelectionEndWidth - SelectionStartWidth;
+
+		auto& Vertices{ m_SelectionPrimitive->GetVertices() };
+		Vertices[1].Position.X = (float)m_SelectionWidth;
+		Vertices[3].Position.X = (float)m_SelectionWidth;
+		m_SelectionPrimitive->UpdateBuffers();
+	}
+}
+
+void CTextEdit::Deselect()
+{
+	m_SelectionStart = m_SelectionEnd = 0;
 }
 
 void CTextEdit::DeletePreChar()
@@ -839,6 +1032,11 @@ void CTextEdit::DeletePostChar()
 			MoveCaret(EDirection::Right);
 		}
 	}
+}
+
+bool CTextEdit::HasSelection() const
+{
+	return (m_SelectionStart != m_SelectionEnd);
 }
 
 void CTextEdit::_SetActive()

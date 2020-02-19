@@ -18,7 +18,7 @@ CPrimitive2D::~CPrimitive2D()
 	Destroy();
 }
 
-void CPrimitive2D::CreateShape(const SInt2& Size, const SFloat4& Color, float Roundness, bool bFlatBottom)
+void CPrimitive2D::CreateRectangle(const SInt2& Size, const SFloat4& Color, float Roundness, bool bFlatBottom)
 {
 	static constexpr size_t KDetail{ 16 };
 	XMFLOAT2 _Size{ (float)Size.X, (float)Size.Y };

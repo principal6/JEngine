@@ -58,6 +58,8 @@ public:
 	CWidget* GetParent() const;
 	size_t GetChildCount() const;
 	CWidget* GetChild(const std::string& Name) const;
+	bool HasParent() const;
+	bool HasChild() const;
 	bool IsChild(const std::string& Name) const;
 	bool IsChild(CWidget* const Widget) const;
 	bool IsFocused() const;
@@ -287,8 +289,6 @@ public:
 	{
 		Left,
 		Right,
-		Up,
-		Down,
 		Home,
 		End,
 	};
@@ -305,9 +305,13 @@ protected:
 
 private:
 	void InsertChar(const std::string& UTF8_Char);
-	void MoveCaret(EDirection eDirection);
+	void MoveCaret(EDirection eDirection, bool bShouldDeselect = true);
+	void MoveCaretTo(const SInt2& MousePosition);
+	void Select(EDirection eDirection);
+	void Deselect();
 	void DeletePreChar();
 	void DeletePostChar();
+	bool HasSelection() const;
 
 private:
 	void _SetActive() override;
@@ -326,4 +330,10 @@ private:
 	uint32_t						m_CaretAt{};
 	int32_t							m_CaretOffsetX{};
 	int32_t							m_StringOffsetX{};
+
+private:
+	std::unique_ptr<CPrimitive2D>	m_SelectionPrimitive{};
+	uint32_t						m_SelectionStart{};
+	uint32_t						m_SelectionEnd{};
+	int32_t							m_SelectionWidth{};
 };

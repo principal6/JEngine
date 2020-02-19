@@ -47,7 +47,8 @@ public:
 
 public:
 	const SBFNTData& GetData() const;
-	size_t CalculateStringWidth(const char* UTF8String);
+	uint32_t CalculateStringWidth(const char* UTF8String);
+	uint32_t CalculateCharacterAtFromOffsetX(const char* UTF8String, int32_t OffsetX);
 
 public:
 	void RenderString(const char* UTF8String, const DirectX::XMFLOAT2& Position, const DirectX::XMFLOAT4& Color);
@@ -103,6 +104,6 @@ private:
 	std::vector<UINT>				m_vGlyphIndices{};
 
 private:
-	size_t							m_PrevWidthHash{};
-	size_t							m_PrevStringWidth{};
+	size_t							m_PrevStringWidthHash{};
+	uint32_t						m_PrevStringWidth{};
 };

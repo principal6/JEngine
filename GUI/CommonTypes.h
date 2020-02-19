@@ -173,6 +173,7 @@ static constexpr SFloat4 KDefaultTextEditBackgroundColor{ 0.0625f, 0.125f, 0.187
 static constexpr SFloat4 KDefaultIconColor{ 0.875f, 1.0f, 1.0f, 1 };
 static constexpr SFloat4 KDefaultFontColor{ KDefaultIconColor };
 static constexpr SFloat4 KDefaultCaretColor{ 1.0f, 1.0f, 1.0f, 1 };
+static constexpr SFloat4 KDefaultSelectionColor{ 0.5f, 0.75f, 1.0f, 0.5f };
 //static constexpr float KDefaultRoundness{ 0.25f }; // relative roundness -unit: percentage
 static constexpr float KDefaultRoundness{ 6 }; // absolute roundness -unit: pixel
 static constexpr int32_t KDefaultTitleBarHeight{ 24 };

@@ -15,7 +15,7 @@ public:
 	~CPrimitive2D();
 
 public:
-	void CreateShape(const SInt2& Size, const SFloat4& Color, float Roundness = 0, bool bFlatBottom = false);
+	void CreateRectangle(const SInt2& Size, const SFloat4& Color, float Roundness = 0, bool bFlatBottom = false);
 	void CreateImage(const SInt2& Size, const SFloat4& TexCoordRange);
 	void CreateLine(const std::vector<SVertex>& vVertices);
 

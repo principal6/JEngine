@@ -211,12 +211,12 @@ const SBFNTData& CBFNTRenderer::GetData() const
 	return m_BFNTLoader->GetData();
 }
 
-size_t CBFNTRenderer::CalculateStringWidth(const char* UTF8String)
+uint32_t CBFNTRenderer::CalculateStringWidth(const char* UTF8String)
 {
 	size_t Hash{ std::hash<string>{}(string(UTF8String)) };
-	if (Hash != m_PrevWidthHash)
+	if (Hash != m_PrevStringWidthHash)
 	{
-		m_PrevWidthHash = Hash;
+		m_PrevStringWidthHash = Hash;
 		m_PrevStringWidth = 0;
 
 		const auto& Data{ m_BFNTLoader->GetData() };
@@ -236,6 +236,34 @@ size_t CBFNTRenderer::CalculateStringWidth(const char* UTF8String)
 		}
 	}
 	return m_PrevStringWidth;
+}
+
+uint32_t CBFNTRenderer::CalculateCharacterAtFromOffsetX(const char* UTF8String, int32_t OffsetX)
+{
+	if (OffsetX <= 0) return 0;
+
+	const auto& Data{ m_BFNTLoader->GetData() };
+	const auto& GlyphIDToIndexMap{ Data.umapGlyphIDtoIndex };
+	size_t BufferAt{};
+	size_t BufferSize{ strlen(UTF8String) };
+	int32_t Width{};
+	uint32_t CharacterAt{};
+	while (BufferAt < BufferSize)
+	{
+		size_t ByteCount{ GetUTF8CharacterByteCount(UTF8String[BufferAt]) };
+		UUTF8_ID UTF8{};
+		memcpy(UTF8.Chars, &UTF8String[BufferAt], ByteCount);
+
+		size_t GlyphIndex{ (GlyphIDToIndexMap.find(UTF8.ID) != GlyphIDToIndexMap.end()) ? GlyphIDToIndexMap.at(UTF8.ID) : 0 };
+		int32_t HalfAdvanceX{ (int32_t)(Data.vGlyphs[GlyphIndex].XAdvance / 2) };
+		
+		if (Width + HalfAdvanceX >= OffsetX) break;
+
+		Width += (int32_t)(Data.vGlyphs[GlyphIndex].XAdvance);
+		BufferAt += ByteCount;
+		++CharacterAt;
+	}
+	return CharacterAt;
 }
 
 void CBFNTRenderer::PushGlyph(size_t BufferCharIndex, size_t GlyphIndex, int32_t& CursorX, int32_t CursorY)

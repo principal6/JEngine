@@ -421,19 +421,48 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 				{
 					if (NewEvent.Extra == VK_RIGHT)
 					{
-						TextEdit->MoveCaret(CTextEdit::EDirection::Right);
+						if (GetAsyncKeyState(VK_SHIFT) < 0)
+						{
+							TextEdit->Select(CTextEdit::EDirection::Right);
+						}
+						else
+						{
+							TextEdit->MoveCaret(CTextEdit::EDirection::Right);
+						}
 					}
 					else if (NewEvent.Extra == VK_LEFT)
 					{
-						TextEdit->MoveCaret(CTextEdit::EDirection::Left);
+						if (GetAsyncKeyState(VK_SHIFT) < 0)
+						{
+							TextEdit->Select(CTextEdit::EDirection::Left);
+						}
+						else
+						{
+							TextEdit->MoveCaret(CTextEdit::EDirection::Left);
+						}
 					}
 					else if (NewEvent.Extra == VK_HOME)
 					{
-						TextEdit->MoveCaret(CTextEdit::EDirection::Home);
+						if (GetAsyncKeyState(VK_SHIFT) < 0)
+						{
+							TextEdit->Select(CTextEdit::EDirection::Home);
+						}
+						else
+						{
+							TextEdit->MoveCaret(CTextEdit::EDirection::Home);
+						}
+						
 					}
 					else if (NewEvent.Extra == VK_END)
 					{
-						TextEdit->MoveCaret(CTextEdit::EDirection::End);
+						if (GetAsyncKeyState(VK_SHIFT) < 0)
+						{
+							TextEdit->Select(CTextEdit::EDirection::End);
+						}
+						else
+						{
+							TextEdit->MoveCaret(CTextEdit::EDirection::End);
+						}
 					}
 					else if (NewEvent.Extra == VK_DELETE)
 					{
@@ -461,6 +490,12 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 					{
 						NewEvent.eEventType = EEventType::MouseUp; // @important: prevent corruption
 					}
+					else if (Widget->GetType() == EWidgetType::TextEdit)
+					{
+						CTextEdit* const TextEdit{ (CTextEdit*)Widget };
+						TextEdit->MoveCaretTo(MousePosition);
+					}
+
 					if (Widget->GetName() == KSysCloseID)
 					{
 						CWidget* const Parent{ Widget->GetParent() };
