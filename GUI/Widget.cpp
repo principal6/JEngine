@@ -699,27 +699,26 @@ void CTextEdit::_Draw() const
 	// Draw background
 	m_Primitive2D.Draw();
 
-	// Draw text
+	// Set scissor rect
+	UINT OldScissorRectCount{};
+	D3D11_RECT* OldScissorRects{};
 	{
-		UINT OldCount{};
-		D3D11_RECT* OldRects{};
-		m_PtrDeviceContext->RSGetScissorRects(&OldCount, OldRects);
+		m_PtrDeviceContext->RSGetScissorRects(&OldScissorRectCount, OldScissorRects);
 
 		auto Parent{ GetParent() };
 		const auto& ParentPosition{ (Parent) ? Parent->GetPosition() : SInt2() };
 		const auto& ParentOffset{ (Parent) ? Parent->GetOffset() : SInt2() };
-		
+
 		D3D11_RECT ScissorRect{};
 		ScissorRect.top = ParentPosition.Y + ParentOffset.Y + m_Position.Y + m_Offset.Y;
 		ScissorRect.bottom = ScissorRect.top + m_Size.Y;
 		ScissorRect.left = ParentPosition.X + ParentOffset.X + m_Position.X + m_Offset.X + KSpaceHorz;
 		ScissorRect.right = ScissorRect.left + m_Size.X - KSpaceHorz * 2;
 		m_PtrDeviceContext->RSSetScissorRects(1, &ScissorRect);
-
-		DrawCaption(m_Size, SInt2(KSpaceHorz + m_StringOffsetX, KSpaceVert));
-
-		m_PtrDeviceContext->RSSetScissorRects(OldCount, OldRects);
 	}
+
+	// Draw text
+	DrawCaption(m_Size, SInt2(KSpaceHorz + m_StringOffsetX, KSpaceVert));
 
 	if (m_bIsFocused)
 	{
@@ -773,6 +772,9 @@ void CTextEdit::_Draw() const
 			m_PrevTimePoint_ms = Now_ms;
 		}
 	}
+
+	// Restore scissor rect
+	m_PtrDeviceContext->RSSetScissorRects(OldScissorRectCount, OldScissorRects);
 }
 
 void CTextEdit::InsertChar(const std::string& UTF8_Char)
@@ -849,18 +851,9 @@ void CTextEdit::MoveCaret(EDirection eDirection, bool bShouldDeselect)
 	}
 }
 
-void CTextEdit::MoveCaretTo(const SInt2& MousePosition)
+void CTextEdit::MoveCaret(const SInt2& MousePosition)
 {
-	SInt2 ClientPosition{ MousePosition.X - (m_Position.X + m_Offset.X), MousePosition.Y + (m_Position.Y + m_Offset.Y) };
-	if (HasParent())
-	{
-		const auto& ParentPosition{ GetParent()->GetPosition() };
-		const auto& ParentOffset{ GetParent()->GetOffset() };
-		ClientPosition.X -= (ParentPosition.X + ParentOffset.X);
-		ClientPosition.Y += (ParentPosition.Y + ParentOffset.Y);
-	}
-	int32_t OffsetX{ ClientPosition.X - m_StringOffsetX };
-	uint32_t NewCaretAt{ m_BFNTRenderer->CalculateCharacterAtFromOffsetX(m_Caption.c_str(), OffsetX) };
+	uint32_t NewCaretAt{ _GetCaretAtFromMousePosition(MousePosition) };
 	if (NewCaretAt < m_CaretAt)
 	{
 		while (NewCaretAt < m_CaretAt)
@@ -992,6 +985,25 @@ void CTextEdit::Select(EDirection eDirection)
 	}
 }
 
+void CTextEdit::Select(const SInt2& MousePosition)
+{
+	uint32_t NewCaretAt{ _GetCaretAtFromMousePosition(MousePosition) };
+	if (NewCaretAt < m_CaretAt)
+	{
+		while (NewCaretAt < m_CaretAt)
+		{
+			Select(EDirection::Left);
+		}
+	}
+	else if (NewCaretAt > m_CaretAt)
+	{
+		while (NewCaretAt > m_CaretAt)
+		{
+			Select(EDirection::Right);
+		}
+	}
+}
+
 void CTextEdit::Deselect()
 {
 	m_SelectionStart = m_SelectionEnd = 0;
@@ -999,7 +1011,11 @@ void CTextEdit::Deselect()
 
 void CTextEdit::DeletePreChar()
 {
-	if (m_CaretAt > 0)
+	if (HasSelection())
+	{
+		DeleteSelection();
+	}
+	else if (m_CaretAt > 0)
 	{
 		size_t ByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt) };
 		size_t PreByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt - 1) };
@@ -1013,7 +1029,11 @@ void CTextEdit::DeletePreChar()
 
 void CTextEdit::DeletePostChar()
 {
-	if (m_CaretAt < GetUTF8StringLength(m_Caption.c_str()))
+	if (HasSelection())
+	{
+		DeleteSelection();
+	}
+	else if (m_CaretAt < GetUTF8StringLength(m_Caption.c_str()))
 	{
 		size_t ByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt) };
 		size_t PostByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt + 1) };
@@ -1034,9 +1054,50 @@ void CTextEdit::DeletePostChar()
 	}
 }
 
+void CTextEdit::DeleteSelection()
+{
+	if (HasSelection())
+	{
+		uint32_t OldCaretAt{ m_CaretAt };
+		uint32_t OldSelectionStart{ m_SelectionStart };
+
+		size_t StartByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_SelectionStart) };
+		size_t EndByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_SelectionEnd) };
+		std::string Pre{ m_Caption.substr(0, StartByteAt) };
+		std::string Post{ m_Caption.substr(EndByteAt) };
+		m_Caption = Pre + Post;
+
+		Deselect();
+
+		if (OldCaretAt > OldSelectionStart)
+		{
+			uint32_t Difference{ OldCaretAt - OldSelectionStart };
+			for (uint32_t i = 0; i < Difference; ++i)
+			{
+				MoveCaret(EDirection::Left);
+			}
+		}
+	}
+}
+
 bool CTextEdit::HasSelection() const
 {
 	return (m_SelectionStart != m_SelectionEnd);
+}
+
+uint32_t CTextEdit::_GetCaretAtFromMousePosition(const SInt2& MousePosition) const
+{
+	SInt2 ClientPosition{ MousePosition.X - (m_Position.X + m_Offset.X), MousePosition.Y + (m_Position.Y + m_Offset.Y) };
+	if (HasParent())
+	{
+		const auto& ParentPosition{ GetParent()->GetPosition() };
+		const auto& ParentOffset{ GetParent()->GetOffset() };
+		ClientPosition.X -= (ParentPosition.X + ParentOffset.X);
+		ClientPosition.Y += (ParentPosition.Y + ParentOffset.Y);
+	}
+	int32_t OffsetX{ ClientPosition.X - m_StringOffsetX };
+	uint32_t NewCaretAt{ m_BFNTRenderer->CalculateCharacterAtFromOffsetX(m_Caption.c_str(), OffsetX) };
+	return NewCaretAt;
 }
 
 void CTextEdit::_SetActive()

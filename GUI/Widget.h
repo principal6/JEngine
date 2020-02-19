@@ -306,12 +306,17 @@ protected:
 private:
 	void InsertChar(const std::string& UTF8_Char);
 	void MoveCaret(EDirection eDirection, bool bShouldDeselect = true);
-	void MoveCaretTo(const SInt2& MousePosition);
+	void MoveCaret(const SInt2& MousePosition);
 	void Select(EDirection eDirection);
+	void Select(const SInt2& MousePosition);
 	void Deselect();
 	void DeletePreChar();
 	void DeletePostChar();
+	void DeleteSelection();
 	bool HasSelection() const;
+
+private:
+	uint32_t _GetCaretAtFromMousePosition(const SInt2& MousePosition) const;
 
 private:
 	void _SetActive() override;

@@ -376,6 +376,7 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 		auto Widget{ m_WidgetPool.Get(Name) };
 		Widget->UpdateState(MousePosition, NewEvent.eEventType, m_bMouseDown, m_LastMouseDownWidget, m_FocusedWidget);
 
+		// TextEdit key input
 		if (NewEvent.eEventType == EEventType::KeyStroke || 
 			NewEvent.eEventType == EEventType::KeyDown ||
 			NewEvent.eEventType == EEventType::IMEComposition)
@@ -490,11 +491,6 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 					{
 						NewEvent.eEventType = EEventType::MouseUp; // @important: prevent corruption
 					}
-					else if (Widget->GetType() == EWidgetType::TextEdit)
-					{
-						CTextEdit* const TextEdit{ (CTextEdit*)Widget };
-						TextEdit->MoveCaretTo(MousePosition);
-					}
 
 					if (Widget->GetName() == KSysCloseID)
 					{
@@ -503,6 +499,37 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 						{
 							((CWindow*)Parent)->Close();
 						}
+					}
+				}
+			}
+
+			// TextEdit mouse input
+			if (Widget->GetType() == EWidgetType::TextEdit)
+			{
+				CTextEdit* const TextEdit{ (CTextEdit*)Widget };
+				if (NewEvent.eEventType == EEventType::MouseDown)
+				{
+					if (Widget->IsMouseInside(MousePosition))
+					{
+						NewEvent.Widget = Widget;
+
+						if (GetAsyncKeyState(VK_SHIFT) < 0)
+						{
+							TextEdit->Select(MousePosition);
+						}
+						else
+						{
+							TextEdit->MoveCaret(MousePosition);
+						}
+					}
+				}
+				if (NewEvent.eEventType == EEventType::MouseMove)
+				{
+					if (m_bMouseDown && Widget->IsFocused())
+					{
+						NewEvent.Widget = Widget;
+
+						TextEdit->Select(MousePosition);
 					}
 				}
 			}
