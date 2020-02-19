@@ -5,6 +5,7 @@
 #include "../Core/Shader.h"
 #include "../Core/ConstantBuffer.h"
 
+using std::string;
 using std::min;
 using std::max;
 using std::make_unique;
@@ -720,65 +721,67 @@ void CTextEdit::_Draw() const
 	// Draw text
 	DrawCaption(m_Size, SInt2(KSpaceHorz + m_StringOffsetX, KSpaceVert));
 
-	if (m_bIsFocused)
+	const int32_t StringWidth{ (int32_t)m_BFNTRenderer->CalculateStringWidth(m_Caption.c_str()) };
+	const int32_t AlignOffsetX{ (m_eCaptionHorzAlign == EHorzAlign::Center) ? (m_Size.X / 2) - (StringWidth / 2) : 0 };
+
+	float OldSpaceOffsetX{ m_PtrCBSpaceData->Offset.x };
+	float OldSpaceOffsetY{ m_PtrCBSpaceData->Offset.y };
+
+	m_PtrVS->Use();
+	m_PtrPS->Use();
+	m_PtrCBSpace->Use(EShaderType::VertexShader, 0);
+
+	// Draw selection
+	if (HasSelection())
 	{
-		const int32_t StringWidth{ (int32_t)m_BFNTRenderer->CalculateStringWidth(m_Caption.c_str()) };
-		const int32_t AlignOffsetX{ (m_eCaptionHorzAlign == EHorzAlign::Center) ? (m_Size.X / 2) - (StringWidth / 2) : 0 };
-
-		float OldSpaceOffsetX{ m_PtrCBSpaceData->Offset.x };
-		float OldSpaceOffsetY{ m_PtrCBSpaceData->Offset.y };
-
-		m_PtrVS->Use();
-		m_PtrPS->Use();
-		m_PtrCBSpace->Use(EShaderType::VertexShader, 0);
-
-		// Draw selection
-		if (HasSelection())
+		if (m_CaretAt == m_SelectionStart)
 		{
-			if (m_CaretAt == m_SelectionStart)
-			{
-				m_PtrCBSpaceData->Offset.x = OldSpaceOffsetX + KSpaceHorz + m_CaretOffsetX + m_StringOffsetX + AlignOffsetX;
-			}
-			else // m_CaretAt == m_SelectionEnd
-			{
-				m_PtrCBSpaceData->Offset.x = OldSpaceOffsetX + KSpaceHorz + m_CaretOffsetX + m_StringOffsetX + AlignOffsetX - m_SelectionWidth;
-			}
-			m_PtrCBSpaceData->Offset.y = OldSpaceOffsetY - KSpaceVert;
-
-			m_PtrCBSpace->Update();
-
-			m_SelectionPrimitive->Draw();
+			m_PtrCBSpaceData->Offset.x = OldSpaceOffsetX + KSpaceHorz + m_CaretOffsetX + m_StringOffsetX + AlignOffsetX;
 		}
-
-		// Draw caret
+		else // m_CaretAt == m_SelectionEnd
 		{
-			const uint32_t Now_ms{ (uint32_t)(Clock.now().time_since_epoch().count() / 1'000'000) };
-			const uint32_t DeltaTime_ms{ Now_ms - m_PrevTimePoint_ms };
-			const uint32_t CaretBlinkTime{ *m_PtrCaretBlinkTime };
-			m_CaretTimer += DeltaTime_ms;
-			if (m_CaretTimer <= CaretBlinkTime)
-			{
-				m_PtrCBSpaceData->Offset.x = OldSpaceOffsetX + m_CaretOffsetX + m_StringOffsetX + AlignOffsetX;
-				m_PtrCBSpaceData->Offset.y = OldSpaceOffsetY;
-				m_PtrCBSpace->Update();
-
-				m_CaretPrimitive->Draw();
-			}
-			else if (m_CaretTimer > CaretBlinkTime * 2)
-			{
-				m_CaretTimer = 0;
-			}
-
-			m_PrevTimePoint_ms = Now_ms;
+			m_PtrCBSpaceData->Offset.x = OldSpaceOffsetX + KSpaceHorz + m_CaretOffsetX + m_StringOffsetX + AlignOffsetX - m_SelectionWidth;
 		}
+		m_PtrCBSpaceData->Offset.y = OldSpaceOffsetY - KSpaceVert;
+
+		m_PtrCBSpace->Update();
+
+		m_SelectionPrimitive->Draw();
 	}
 
 	// Restore scissor rect
 	m_PtrDeviceContext->RSSetScissorRects(OldScissorRectCount, OldScissorRects);
+
+	// Draw caret
+	if (m_bIsFocused)
+	{
+		const uint32_t Now_ms{ (uint32_t)(Clock.now().time_since_epoch().count() / 1'000'000) };
+		const uint32_t DeltaTime_ms{ Now_ms - m_PrevTimePoint_ms };
+		const uint32_t CaretBlinkTime{ *m_PtrCaretBlinkTime };
+		m_CaretTimer += DeltaTime_ms;
+		if (m_CaretTimer <= CaretBlinkTime)
+		{
+			m_PtrCBSpaceData->Offset.x = OldSpaceOffsetX + m_CaretOffsetX + m_StringOffsetX + AlignOffsetX;
+			m_PtrCBSpaceData->Offset.y = OldSpaceOffsetY;
+			m_PtrCBSpace->Update();
+
+			m_CaretPrimitive->Draw();
+		}
+		else if (m_CaretTimer > CaretBlinkTime * 2)
+		{
+			m_CaretTimer = 0;
+		}
+
+		m_PrevTimePoint_ms = Now_ms;
+	}
 }
 
 void CTextEdit::InsertChar(const std::string& UTF8_Char)
 {
+	string _UTF8_Char{ UTF8_Char };
+	size_t ByteCount{ GetUTF8CharacterByteCount(_UTF8_Char[0]) };
+	if (_UTF8_Char.size() > ByteCount) _UTF8_Char = _UTF8_Char.substr(0, ByteCount);
+
 	if (m_Caption.size())
 	{
 		size_t ByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_CaretAt) };
@@ -791,6 +794,17 @@ void CTextEdit::InsertChar(const std::string& UTF8_Char)
 		m_Caption = UTF8_Char;
 	}
 	MoveCaret(EDirection::Right);
+}
+
+void CTextEdit::InsertString(const std::string& UTF8_String)
+{
+	size_t ByteAt{};
+	while (ByteAt < UTF8_String.size())
+	{
+		size_t ByteCount{ GetUTF8CharacterByteCount(UTF8_String[ByteAt]) };
+		InsertChar(UTF8_String.substr(ByteAt, ByteCount));
+		ByteAt += ByteCount;
+	}
 }
 
 void CTextEdit::MoveCaret(EDirection eDirection, bool bShouldDeselect)
@@ -1083,6 +1097,92 @@ void CTextEdit::DeleteSelection()
 bool CTextEdit::HasSelection() const
 {
 	return (m_SelectionStart != m_SelectionEnd);
+}
+
+uint32_t CTextEdit::GetSelectionLength() const
+{
+	return m_SelectionEnd - m_SelectionStart;
+}
+
+uint32_t CTextEdit::GetSelectionByteLength() const
+{
+	size_t SelectionStartByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_SelectionStart) };
+	size_t SelectionEndByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_SelectionEnd) };
+	return (uint32_t)(SelectionEndByteAt - SelectionStartByteAt);
+}
+
+std::string CTextEdit::GetSelection() const
+{
+	size_t SelectionStartByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_SelectionStart) };
+	size_t SelectionEndByteAt{ ConvertStringAtToByteAt(m_Caption.c_str(), m_SelectionEnd) };
+	return m_Caption.substr(SelectionStartByteAt, SelectionEndByteAt - SelectionStartByteAt);
+}
+
+bool CTextEdit::CopyToClipboard()
+{
+	if (HasSelection() && OpenClipboard(nullptr))
+	{
+		uint32_t ByteLength{ GetSelectionByteLength() };
+		HGLOBAL Mem{ GlobalAlloc(GMEM_MOVEABLE, ByteLength + 1) };
+		if (Mem)
+		{
+			char* Copy{ (char*)GlobalLock(Mem) };
+			memcpy(Copy, GetSelection().c_str(), ByteLength * sizeof(char));
+			Copy[ByteLength] = 0;    // null character 
+			GlobalUnlock(Copy);
+
+			EmptyClipboard();
+
+			SetClipboardData(CF_TEXT, Mem);
+
+			GlobalFree(Mem);
+
+			return true;
+		}
+
+		CloseClipboard();
+	}
+
+	return false;
+}
+
+bool CTextEdit::CutToClipboard()
+{
+	if (CopyToClipboard())
+	{
+		DeleteSelection();
+		return true;
+	}
+	return false;
+}
+
+bool CTextEdit::PasteFromClipboard()
+{
+	if (OpenClipboard(nullptr))
+	{
+		HANDLE ClipboardData{ GetClipboardData(CF_TEXT) };
+		char* Mem{ (char*)GlobalLock(ClipboardData) };
+		if (Mem)
+		{
+			string str{};
+			size_t len{ strlen(Mem) };
+			for (size_t i = 0; i < len; ++i)
+			{
+				str += Mem[i];
+			}
+			GlobalUnlock(Mem);
+
+			DeleteSelection();
+
+			InsertString(str);
+
+			return true;
+		}
+
+		CloseClipboard();
+	}
+
+	return false;
 }
 
 uint32_t CTextEdit::_GetCaretAtFromMousePosition(const SInt2& MousePosition) const

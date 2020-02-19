@@ -408,9 +408,21 @@ bool CGUIBase::GenerateEvent(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 					}
 
 					wchar_t wChar{ (wchar_t)NewEvent.Extra };
-					if (wChar == L'\b')
+					if (wChar == 0x03) // ctrl + c
+					{
+						TextEdit->CopyToClipboard();
+					}
+					else if (wChar == 0x08) // backspace
 					{
 						TextEdit->DeletePreChar();
+					}
+					else if (wChar == 0x16) // ctrl + v
+					{
+						TextEdit->PasteFromClipboard();
+					}
+					else if (wChar == 0x18) // ctrl + x
+					{
+						TextEdit->CutToClipboard();
 					}
 					else if (wChar >= (wchar_t)0x20)
 					{

@@ -305,6 +305,7 @@ protected:
 
 private:
 	void InsertChar(const std::string& UTF8_Char);
+	void InsertString(const std::string& UTF8_String);
 	void MoveCaret(EDirection eDirection, bool bShouldDeselect = true);
 	void MoveCaret(const SInt2& MousePosition);
 	void Select(EDirection eDirection);
@@ -314,6 +315,14 @@ private:
 	void DeletePostChar();
 	void DeleteSelection();
 	bool HasSelection() const;
+	uint32_t GetSelectionLength() const;
+	uint32_t GetSelectionByteLength() const;
+	std::string GetSelection() const;
+
+private:
+	bool CopyToClipboard();
+	bool CutToClipboard();
+	bool PasteFromClipboard();
 
 private:
 	uint32_t _GetCaretAtFromMousePosition(const SInt2& MousePosition) const;
