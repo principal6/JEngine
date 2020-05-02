@@ -1,4 +1,4 @@
-#include "Game.h"
+Ôªø#include "Game.h"
 #include "BinaryData.h"
 #include "FileDialog.h"
 
@@ -5031,7 +5031,7 @@ void CGame::DrawEditorGUI()
 		
 		ImGui::SetNextWindowPos(ImVec2((m_WindowSize.x - KTestWindowSizeX) * 0.5f, 21), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(ImVec2(KTestWindowSizeX, 0), ImGuiCond_Always);
-		if (ImGui::Begin(u8"≈◊Ω∫∆Æ ¿©µµøÏ", nullptr, ImGuiWindowFlags_AlwaysAutoResize |
+		if (ImGui::Begin(u8"ÌÖåÏä§Ìä∏ ÏúàÎèÑÏö∞", nullptr, ImGuiWindowFlags_AlwaysAutoResize |
 			ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar))
 		{
 			if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::InitTest)))
@@ -5045,7 +5045,7 @@ void CGame::DrawEditorGUI()
 	{
 		ImGui::SetNextWindowPos(ImVec2((m_WindowSize.x - KTestWindowSizeX) * 0.5f, 21), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(ImVec2(KTestWindowSizeX, 0), ImGuiCond_Always);
-		if (ImGui::Begin(u8"≈◊Ω∫∆Æ ¿©µµøÏ", nullptr, ImGuiWindowFlags_AlwaysAutoResize |
+		if (ImGui::Begin(u8"ÌÖåÏä§Ìä∏ ÏúàÎèÑÏö∞", nullptr, ImGuiWindowFlags_AlwaysAutoResize |
 			ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar))
 		{
 			if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::QuitTest)))
@@ -5059,7 +5059,7 @@ void CGame::DrawEditorGUI()
 		{
 			static constexpr float KLabelWidth{ 180.0f };
 
-			// ∑ª¥ı∏µ
+			// Î†åÎçîÎßÅ
 			{
 				ImGui::AlignTextToFramePadding();
 				ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::FramesPerSecond_FPS));
@@ -5068,7 +5068,7 @@ void CGame::DrawEditorGUI()
 			}
 
 
-			// π∞∏Æ ø£¡¯
+			// Î¨ºÎ¶¨ ÏóîÏßÑ
 			if (ImGui::TreeNodeEx(GUI_STRING_CONTENT(EGUIString_Content::PhysicsEngine), ImGuiTreeNodeFlags_DefaultOpen))
 			{
 				static int iButtonState{};
@@ -5087,7 +5087,7 @@ void CGame::DrawEditorGUI()
 					ImGui::AlignTextToFramePadding();
 					ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::UpdateRate));
 					ImGui::SameLine(KLabelWidth);
-					ImGui::SliderFloat(u8"##∞ªΩ≈ º”µµ", &m_Test_SlowFactor, 0.1f, 1.0f, "%.2f");
+					ImGui::SliderFloat(u8"##Í∞±Ïã† ÏÜçÎèÑ", &m_Test_SlowFactor, 0.1f, 1.0f, "%.2f");
 				}
 				else
 				{
@@ -5107,19 +5107,19 @@ void CGame::DrawEditorGUI()
 
 			ImGui::Separator();
 
-			// «√∑π¿ÃæÓ
+			// ÌîåÎ†àÏù¥Ïñ¥
 			if (ImGui::TreeNodeEx(GUI_STRING_CONTENT(EGUIString_Content::Player), ImGuiTreeNodeFlags_DefaultOpen))
 			{
 				CObject3D* const PlayerObject{ m_PhysicsEngine.GetPlayerObject() };
 				ImGui::AlignTextToFramePadding();
 				ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Translation));
 				ImGui::SameLine(KLabelWidth);
-				ImGui::DragFloat3(u8"##¿ßƒ°", (float*)&PlayerObject->GetTransform().Translation, 0.1f);
+				ImGui::DragFloat3(u8"##ÏúÑÏπò", (float*)&PlayerObject->GetTransform().Translation, 0.1f);
 				
 				ImGui::AlignTextToFramePadding();
 				ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Velocity));
 				ImGui::SameLine(KLabelWidth);
-				ImGui::DragFloat3(u8"##º”µµ", (float*)&PlayerObject->GetPhysics().LinearVelocity, 0.1f);
+				ImGui::DragFloat3(u8"##ÏÜçÎèÑ", (float*)&PlayerObject->GetPhysics().LinearVelocity, 0.1f);
 
 				ImGui::TreePop();
 			}
@@ -5199,7 +5199,7 @@ void CGame::DrawEditorGUIMenuBar()
 
 void CGame::DrawEditorGUIPopupTerrainGenerator()
 {
-	// ### ¡ˆ«¸ ª˝º∫±‚ ¿©µµøÏ ###
+	// ### ÏßÄÌòï ÏÉùÏÑ±Í∏∞ ÏúàÎèÑÏö∞ ###
 	if (m_EditorGUIBools.bShowPopupTerrainGenerator) ImGui::OpenPopup(GUI_STRING_CONTENT(EGUIString_Content::TerrainGenerator));
 	if (ImGui::BeginPopupModal(GUI_STRING_CONTENT(EGUIString_Content::TerrainGenerator),
 		nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
@@ -5268,7 +5268,7 @@ void CGame::DrawEditorGUIPopupTerrainGenerator()
 
 void CGame::DrawEditorGUIPopupObjectAdder()
 {
-	// ### ø¿∫Í¡ß∆Æ √ﬂ∞° ¿©µµøÏ ###
+	// ### Ïò§Î∏åÏ†ùÌä∏ Ï∂îÍ∞Ä ÏúàÎèÑÏö∞ ###
 	if (m_EditorGUIBools.bShowPopupObjectAdder) ImGui::OpenPopup(GUI_STRING_CONTENT(EGUIString_Content::ObjectGenerator));
 	ImGui::SetNextWindowPosCenter();
 	if (ImGui::BeginPopupModal(GUI_STRING_CONTENT(EGUIString_Content::ObjectGenerator),
@@ -5362,7 +5362,7 @@ void CGame::DrawEditorGUIPopupObjectAdder()
 							ImGui::AlignTextToFramePadding();
 							ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Color));
 							ImGui::SameLine(KItemsOffetX);
-							ImGui::ColorEdit3(u8"##- ªˆªÛ", (float*)&MaterialUniformColor.x, ImGuiColorEditFlags_RGB);
+							ImGui::ColorEdit3(u8"##- ÏÉâÏÉÅ", (float*)&MaterialUniformColor.x, ImGuiColorEditFlags_RGB);
 
 							// Quasi-2D primitives scalars
 							if (iSelected3DPrimitiveType >= 0 && iSelected3DPrimitiveType <= 3)
@@ -5370,12 +5370,12 @@ void CGame::DrawEditorGUIPopupObjectAdder()
 								ImGui::AlignTextToFramePadding();
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Width));
 								ImGui::SameLine(KItemsOffetX);
-								ImGui::SliderFloat(u8"##- ∞°∑Œ ≈©±‚", &WidthScalar3D, 0.01f, 100.0f);
+								ImGui::SliderFloat(u8"##- Í∞ÄÎ°ú ÌÅ¨Í∏∞", &WidthScalar3D, 0.01f, 100.0f);
 
 								ImGui::AlignTextToFramePadding();
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Height));
 								ImGui::SameLine(KItemsOffetX);
-								ImGui::SliderFloat(u8"##- ºº∑Œ ≈©±‚", &HeightScalar3D, 0.01f, 100.0f);
+								ImGui::SliderFloat(u8"##- ÏÑ∏Î°ú ÌÅ¨Í∏∞", &HeightScalar3D, 0.01f, 100.0f);
 							}
 
 							// 3D primitives that require SideCount
@@ -5389,13 +5389,13 @@ void CGame::DrawEditorGUIPopupObjectAdder()
 									ImGui::AlignTextToFramePadding();
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::RadiusFactor));
 									ImGui::SameLine(KItemsOffetX);
-									ImGui::SliderFloat(u8"##- π›¡ˆ∏ß ¿Œºˆ", &RadiusFactor, 0.0f, 1.0f);
+									ImGui::SliderFloat(u8"##- Î∞òÏßÄÎ¶Ñ Ïù∏Ïàò", &RadiusFactor, 0.0f, 1.0f);
 								}
 
 								ImGui::AlignTextToFramePadding();
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::SideCount));
 								ImGui::SameLine(KItemsOffetX);
-								ImGui::SliderInt(u8"##- ø∑∏È ºˆ", (int*)&SideCount, KMinPrimitiveDetail, KMaxPrimitiveDetail);
+								ImGui::SliderInt(u8"##- ÏòÜÎ©¥ Ïàò", (int*)&SideCount, KMinPrimitiveDetail, KMaxPrimitiveDetail);
 							}
 
 							// 3D primitives that require SegmentCount
@@ -5407,13 +5407,13 @@ void CGame::DrawEditorGUIPopupObjectAdder()
 									ImGui::AlignTextToFramePadding();
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::InnerRadius));
 									ImGui::SameLine(KItemsOffetX);
-									ImGui::SliderFloat(u8"##- ∂Ï π›¡ˆ∏ß", &InnerRadius, 0.0f, 1.0f);
+									ImGui::SliderFloat(u8"##- Îù† Î∞òÏßÄÎ¶Ñ", &InnerRadius, 0.0f, 1.0f);
 								}
 
 								ImGui::AlignTextToFramePadding();
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::SegmentCount));
 								ImGui::SameLine(KItemsOffetX);
-								ImGui::SliderInt(u8"##- Segment ºˆ", (int*)&SegmentCount, KMinPrimitiveDetail, KMaxPrimitiveDetail);
+								ImGui::SliderInt(u8"##- Segment Ïàò", (int*)&SegmentCount, KMinPrimitiveDetail, KMaxPrimitiveDetail);
 							}
 
 							ImGui::PopItemWidth();
@@ -5479,7 +5479,7 @@ void CGame::DrawEditorGUIPopupObjectAdder()
 					ImGui::AlignTextToFramePadding();
 					ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::CameraType));
 					ImGui::SameLine(KOffetX);
-					if (ImGui::BeginCombo(u8"##ƒ´∏ﬁ∂Û ¡æ∑˘", KCameraTypes[iSelectedCameraType]))
+					if (ImGui::BeginCombo(u8"##Ïπ¥Î©îÎùº Ï¢ÖÎ•ò", KCameraTypes[iSelectedCameraType]))
 					{
 						for (int iCameraType = 0; iCameraType < ARRAYSIZE(KCameraTypes); ++iCameraType)
 						{
@@ -5506,7 +5506,7 @@ void CGame::DrawEditorGUIPopupObjectAdder()
 				ImGui::AlignTextToFramePadding();
 				ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::LightType));
 				ImGui::SameLine(KOffetX);
-				if (ImGui::BeginCombo(u8"##±§ø¯ ¡æ∑˘", KLightTypes[iSelectedLightType]))
+				if (ImGui::BeginCombo(u8"##Í¥ëÏõê Ï¢ÖÎ•ò", KLightTypes[iSelectedLightType]))
 				{
 					for (int iLightType = 0; iLightType < ARRAYSIZE(KLightTypes); ++iLightType)
 					{
@@ -5735,7 +5735,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 
 			if (ImGui::BeginTabBar(u8"TabBar", ImGuiTabBarFlags_None))
 			{
-				// ø¿∫Í¡ß∆Æ ≈«
+				// Ïò§Î∏åÏ†ùÌä∏ ÌÉ≠
 				if (ImGui::BeginTabItem(GUI_STRING_PROPERTY_EDITOR(EGUIString_PropertyEditor::Tab_Object)))
 				{
 					static bool bShowAnimationAdder{ false };
@@ -5829,7 +5829,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Translation));
 									ImGui::SameLine(ItemsOffsetX);
 									XMVECTOR Translation{ InstanceTransform.Translation };
-									if (ImGui::DragFloat3(u8"##¿ßƒ°", Translation.m128_f32, KTranslationDelta,
+									if (ImGui::DragFloat3(u8"##ÏúÑÏπò", Translation.m128_f32, KTranslationDelta,
 										KTranslationMinLimit, KTranslationMaxLimit, "%.3f"))
 									{
 										Object3D->TranslateInstanceTo(SelectionData.Name, Translation);
@@ -5845,7 +5845,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 										(int)(InstanceTransform.Pitch * KRotation2PITo360),
 										(int)(InstanceTransform.Yaw * KRotation2PITo360),
 										(int)(InstanceTransform.Roll * KRotation2PITo360) };
-									if (ImGui::DragInt3(u8"##»∏¿¸", PitchYawRoll360, KRotation360Unit,
+									if (ImGui::DragInt3(u8"##ÌöåÏ†Ñ", PitchYawRoll360, KRotation360Unit,
 										KRotation360MinLimit, KRotation360MaxLimit))
 									{
 										Object3D->RotateInstancePitchTo(SelectionData.Name, PitchYawRoll360[0] * KRotation360To2PI);
@@ -5858,7 +5858,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Scaling));
 									ImGui::SameLine(ItemsOffsetX);
 									XMVECTOR Scaling{ InstanceTransform.Scaling };
-									if (ImGui::DragFloat3(u8"##≈©±‚", Scaling.m128_f32, KScalingDelta,
+									if (ImGui::DragFloat3(u8"##ÌÅ¨Í∏∞", Scaling.m128_f32, KScalingDelta,
 										CObject3D::KScalingMinLimit, CObject3D::KScalingMaxLimit, "%.3f"))
 									{
 										Object3D->ScaleInstanceTo(SelectionData.Name, Scaling);
@@ -5884,7 +5884,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 										ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Translation));
 										ImGui::SameLine(ItemsOffsetX);
 										XMVECTOR Translation{ Object3D->GetTransform().Translation };
-										if (ImGui::DragFloat3(u8"##¿ßƒ°", Translation.m128_f32, KTranslationDelta,
+										if (ImGui::DragFloat3(u8"##ÏúÑÏπò", Translation.m128_f32, KTranslationDelta,
 											KTranslationMinLimit, KTranslationMaxLimit, "%.3f"))
 										{
 											Object3D->TranslateTo(Translation);
@@ -5900,7 +5900,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 											(int)(Object3D->GetTransform().Pitch * KRotation2PITo360),
 											(int)(Object3D->GetTransform().Yaw * KRotation2PITo360),
 											(int)(Object3D->GetTransform().Roll * KRotation2PITo360) };
-										if (ImGui::DragInt3(u8"##»∏¿¸", PitchYawRoll360, KRotation360Unit,
+										if (ImGui::DragInt3(u8"##ÌöåÏ†Ñ", PitchYawRoll360, KRotation360Unit,
 											KRotation360MinLimit, KRotation360MaxLimit))
 										{
 											Object3D->RotatePitchTo(PitchYawRoll360[0] * KRotation360To2PI);
@@ -5915,7 +5915,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 										ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Scaling));
 										ImGui::SameLine(ItemsOffsetX);
 										XMVECTOR Scaling{ Object3D->GetTransform().Scaling };
-										if (ImGui::DragFloat3(u8"##≈©±‚", Scaling.m128_f32, KScalingDelta,
+										if (ImGui::DragFloat3(u8"##ÌÅ¨Í∏∞", Scaling.m128_f32, KScalingDelta,
 											CObject3D::KScalingMinLimit, CObject3D::KScalingMaxLimit, "%.3f"))
 										{
 											Object3D->ScaleTo(Scaling);
@@ -5979,7 +5979,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									ImGui::AlignTextToFramePadding();
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Velocity));
 									ImGui::SameLine(ItemsOffsetX);
-									if (ImGui::DragFloat3(u8"##º”µµ", &LinearVelocity.x, 0.1f))
+									if (ImGui::DragFloat3(u8"##ÏÜçÎèÑ", &LinearVelocity.x, 0.1f))
 									{
 										Object3D->SetLinearVelocity(XMLoadFloat3(&LinearVelocity));
 									}
@@ -6082,7 +6082,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 												{
 													ImGui::AlignTextToFramePadding();
 													ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::BoundingVolumeType));
-													if (ImGui::BeginCombo(u8"##Bounding volume ¿Ø«¸", KTypes[(int)SelectedBoundingVolume.eType]))
+													if (ImGui::BeginCombo(u8"##Bounding volume Ïú†Ìòï", KTypes[(int)SelectedBoundingVolume.eType]))
 													{
 														for (int iType = 0; iType < KTypeCount; ++iType)
 														{
@@ -6145,7 +6145,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									ImGui::AlignTextToFramePadding();
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::UseTessellation));
 									ImGui::SameLine(ItemsOffsetX);
-									if (ImGui::Checkbox(u8"##≈◊ºø∑π¿Ãº« ªÁøÎ ø©∫Œ", &bShouldTessellate))
+									if (ImGui::Checkbox(u8"##ÌÖåÏÖÄÎ†àÏù¥ÏÖò ÏÇ¨Ïö© Ïó¨Î∂Ä", &bShouldTessellate))
 									{
 										Object3D->ShouldTessellate(bShouldTessellate);
 									}
@@ -6154,7 +6154,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									ImGui::AlignTextToFramePadding();
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::EdgeTessellationFactor));
 									ImGui::SameLine(ItemsOffsetX);
-									if (ImGui::SliderFloat(u8"##≈◊ºø∑π¿Ãº« ∫Ø ∞Ëºˆ", &TessFactorData.EdgeTessFactor, 0.0f, 64.0f, "%.2f"))
+									if (ImGui::SliderFloat(u8"##ÌÖåÏÖÄÎ†àÏù¥ÏÖò Î≥Ä Í≥ÑÏàò", &TessFactorData.EdgeTessFactor, 0.0f, 64.0f, "%.2f"))
 									{
 										Object3D->SetTessFactorData(TessFactorData);
 									}
@@ -6162,7 +6162,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									ImGui::AlignTextToFramePadding();
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::InsideTessellationFactor));
 									ImGui::SameLine(ItemsOffsetX);
-									if (ImGui::SliderFloat(u8"##≈◊ºø∑π¿Ãº« ≥ª∫Œ ∞Ëºˆ", &TessFactorData.InsideTessFactor, 0.0f, 64.0f, "%.2f"))
+									if (ImGui::SliderFloat(u8"##ÌÖåÏÖÄÎ†àÏù¥ÏÖò ÎÇ¥Î∂Ä Í≥ÑÏàò", &TessFactorData.InsideTessFactor, 0.0f, 64.0f, "%.2f"))
 									{
 										Object3D->SetTessFactorData(TessFactorData);
 									}
@@ -6171,7 +6171,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									ImGui::AlignTextToFramePadding();
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DisplacementFactor));
 									ImGui::SameLine(ItemsOffsetX);
-									if (ImGui::SliderFloat(u8"##∫Ø¿ß ∞Ëºˆ", &DisplacementData.DisplacementFactor, 0.0f, 1.0f, "%.2f"))
+									if (ImGui::SliderFloat(u8"##Î≥ÄÏúÑ Í≥ÑÏàò", &DisplacementData.DisplacementFactor, 0.0f, 1.0f, "%.2f"))
 									{
 										Object3D->SetDisplacementData(DisplacementData);
 									}
@@ -6188,7 +6188,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::IgnoreSceneMaterial));
 									ImGui::SameLine(ItemsOffsetX);
 									bool bIgnoreSceneMaterial{ Object3D->ShouldIgnoreSceneMaterial() };
-									if (ImGui::Checkbox(u8"##¿Â∏È ¿Á¡˙ π´Ω√«œ±‚", &bIgnoreSceneMaterial))
+									if (ImGui::Checkbox(u8"##Ïû•Î©¥ Ïû¨Ïßà Î¨¥ÏãúÌïòÍ∏∞", &bIgnoreSceneMaterial))
 									{
 										Object3D->ShouldIgnoreSceneMaterial(bIgnoreSceneMaterial);
 									}
@@ -6198,7 +6198,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 										static CMaterialData* capturedMaterialData{};
 										static CMaterialTextureSet* capturedMaterialTextureSet{};
 										static ETextureType ecapturedTextureType{};
-										if (!ImGui::IsPopupOpen(u8"≈ÿΩ∫√≥≈Ωªˆ±‚")) m_EditorGUIBools.bShowPopupMaterialTextureExplorer = false;
+										if (!ImGui::IsPopupOpen(u8"ÌÖçÏä§Ï≤òÌÉêÏÉâÍ∏∞")) m_EditorGUIBools.bShowPopupMaterialTextureExplorer = false;
 
 										for (size_t iMaterial = 0; iMaterial < Object3D->GetMaterialCount(); ++iMaterial)
 										{
@@ -6284,7 +6284,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 
 										static constexpr float KAnimationNameWidth{ 200.0f };
 										static constexpr float KRegistrationWidth{ 100.0f };
-										if (ImGui::ListBoxHeader(u8"##æ÷¥œ∏ﬁ¿Ãº« ∏Ò∑œ", ImVec2(WindowWidth, 0)))
+										if (ImGui::ListBoxHeader(u8"##Ïï†ÎãàÎ©îÏù¥ÏÖò Î™©Î°ù", ImVec2(WindowWidth, 0)))
 										{
 											for (int iAnimation = 0; iAnimation < AnimationCount; ++iAnimation)
 											{
@@ -6325,7 +6325,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 											ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::InstanceAnimationID));
 											ImGui::SameLine(ItemsOffsetX);
 											int AnimationID{ (int)Object3D->GetAnimationID(Identifier) };
-											if (ImGui::SliderInt(u8"##¿ŒΩ∫≈œΩ∫ æ÷¥œ∏ﬁ¿Ãº« ID", &AnimationID, 0, AnimationCount - 1))
+											if (ImGui::SliderInt(u8"##Ïù∏Ïä§ÌÑ¥Ïä§ Ïï†ÎãàÎ©îÏù¥ÏÖò ID", &AnimationID, 0, AnimationCount - 1))
 											{
 												Object3D->SetAnimation(SObjectIdentifier(Object3D, SelectionData.Name), AnimationID);
 											}
@@ -6337,7 +6337,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 											ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::ObjectAnimationID));
 											ImGui::SameLine(ItemsOffsetX);
 											int AnimationID{ (int)Object3D->GetAnimationID(Identifier) };
-											if (ImGui::SliderInt(u8"##ø¿∫Í¡ß∆Æ æ÷¥œ∏ﬁ¿Ãº« ID", &AnimationID, 0, AnimationCount - 1))
+											if (ImGui::SliderInt(u8"##Ïò§Î∏åÏ†ùÌä∏ Ïï†ÎãàÎ©îÏù¥ÏÖò ID", &AnimationID, 0, AnimationCount - 1))
 											{
 												Object3D->SetAnimation(SObjectIdentifier(Object3D), AnimationID);
 											}
@@ -6358,7 +6358,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::AnimationName));
 								ImGui::SameLine(150);
 								static char Name[16]{};
-								ImGui::InputText(u8"##æ÷¥œ∏ﬁ¿Ãº« ¿Ã∏ß", Name, 16, ImGuiInputTextFlags_EnterReturnsTrue);
+								ImGui::InputText(u8"##Ïï†ÎãàÎ©îÏù¥ÏÖò Ïù¥Î¶Ñ", Name, 16, ImGuiInputTextFlags_EnterReturnsTrue);
 
 								ImGui::AlignTextToFramePadding();
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::FileName));
@@ -6432,14 +6432,14 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 
 										bFirstTime = false;
 									}
-									ImGui::InputText(u8"##æ÷¥œ∏ﬁ¿Ãº« ¿Ã∏ß", AnimationName,
+									ImGui::InputText(u8"##Ïï†ÎãàÎ©îÏù¥ÏÖò Ïù¥Î¶Ñ", AnimationName,
 										CObject3D::KMaxAnimationNameLength, ImGuiInputTextFlags_EnterReturnsTrue);
 
 									const char* CurrentRegistration{ KRegisteredAnimationTypeNames[iSelectedRegistration] };
 									ImGui::AlignTextToFramePadding();
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::RegisteredType));
 									ImGui::SameLine(KLabelWidth);
-									if (ImGui::BeginCombo(u8"##µÓ∑œ ¡§∫∏", CurrentRegistration))
+									if (ImGui::BeginCombo(u8"##Îì±Î°ù Ï†ïÎ≥¥", CurrentRegistration))
 									{
 										for (size_t iRegistration = 0; iRegistration < ARRAYSIZE(KRegisteredAnimationTypeNames); ++iRegistration)
 										{
@@ -6460,7 +6460,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									ImGui::AlignTextToFramePadding();
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::BehaviorStartTick));
 									ImGui::SameLine(KLabelWidth);
-									ImGui::DragFloat(u8"##«‡µø ∞≥Ω√ Tick", &BehaviorStartTick);
+									ImGui::DragFloat(u8"##ÌñâÎèô Í∞úÏãú Tick", &BehaviorStartTick);
 								}
 								
 								if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::Confirm)) || m_CapturedKeyboardState.Enter)
@@ -6489,7 +6489,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 
 							ImGui::Separator();
 
-							// ¿Œ∞¯¡ˆ¥… ∆–≈œ
+							// Ïù∏Í≥µÏßÄÎä• Ìå®ÌÑ¥
 							{
 								if (ImGui::TreeNodeEx(
 									(SelectionData.eObjectType == EObjectType::Object3DInstance) ? 
@@ -6663,7 +6663,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 								ImGui::AlignTextToFramePadding();
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Translation));
 								ImGui::SameLine(ItemsOffsetX);
-								if (ImGui::DragFloat3(u8"##¿ßƒ°", Translation, 0.01f, -10000.0f, +10000.0f, "%.3f"))
+								if (ImGui::DragFloat3(u8"##ÏúÑÏπò", Translation, 0.01f, -10000.0f, +10000.0f, "%.3f"))
 								{
 									SelectedCamera->TranslateTo(XMVectorSet(Translation[0], Translation[1], Translation[2], 1.0f));
 
@@ -6675,7 +6675,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 								ImGui::AlignTextToFramePadding();
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::RotationPitch));
 								ImGui::SameLine(ItemsOffsetX);
-								if (ImGui::DragFloat(u8"##»∏¿¸ Pitch", &Pitch, 0.01f, -10000.0f, +10000.0f, "%.3f"))
+								if (ImGui::DragFloat(u8"##ÌöåÏ†Ñ Pitch", &Pitch, 0.01f, -10000.0f, +10000.0f, "%.3f"))
 								{
 									SelectedCamera->SetPitch(Pitch);
 
@@ -6687,7 +6687,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 								ImGui::AlignTextToFramePadding();
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::RotationYaw));
 								ImGui::SameLine(ItemsOffsetX);
-								if (ImGui::DragFloat(u8"##»∏¿¸ Yaw", &Yaw, 0.01f, -10000.0f, +10000.0f, "%.3f"))
+								if (ImGui::DragFloat(u8"##ÌöåÏ†Ñ Yaw", &Yaw, 0.01f, -10000.0f, +10000.0f, "%.3f"))
 								{
 									SelectedCamera->SetYaw(Yaw);
 
@@ -6702,7 +6702,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									ImGui::AlignTextToFramePadding();
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::ZoomDistance));
 									ImGui::SameLine(ItemsOffsetX);
-									if (ImGui::DragFloat(u8"##¡‹ ∞≈∏Æ", &ZoomDistance, 0.01f, 
+									if (ImGui::DragFloat(u8"##Ï§å Í±∞Î¶¨", &ZoomDistance, 0.01f, 
 										SelectedCamera->GetZoomDistanceMin(), SelectedCamera->GetZoomDistanceMax()))
 									{
 										SelectedCamera->SetZoomDistance(ZoomDistance);
@@ -6715,7 +6715,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::MovementSpeed));
 								ImGui::SameLine(ItemsOffsetX);
 								float MovementFactor{ SelectedCamera->GetMovementFactor() };
-								if (ImGui::SliderFloat(u8"##ƒ´∏ﬁ∂Û ¿Ãµø º”µµ", &MovementFactor, 1.0f, 100.0f, "%.0f"))
+								if (ImGui::SliderFloat(u8"##Ïπ¥Î©îÎùº Ïù¥Îèô ÏÜçÎèÑ", &MovementFactor, 1.0f, 100.0f, "%.0f"))
 								{
 									SelectedCamera->SetMovementFactor(MovementFactor);
 								}
@@ -6778,7 +6778,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 								ImGui::AlignTextToFramePadding();
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Translation));
 								ImGui::SameLine(ItemsOffsetX);
-								if (ImGui::DragFloat3(u8"##¿ßƒ°", Position, 0.01f, -10000.0f, +10000.0f, "%.3f"))
+								if (ImGui::DragFloat3(u8"##ÏúÑÏπò", Position, 0.01f, -10000.0f, +10000.0f, "%.3f"))
 								{
 									m_LightArray[SelectionData.Extra]->SetInstancePosition(SelectionData.Name,
 										XMVectorSet(Position[0], Position[1], Position[2], 1.0f));
@@ -6791,7 +6791,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 								ImGui::AlignTextToFramePadding();
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Color));
 								ImGui::SameLine(ItemsOffsetX);
-								if (ImGui::ColorEdit3(u8"##ªˆªÛ", Color, ImGuiColorEditFlags_RGB | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR))
+								if (ImGui::ColorEdit3(u8"##ÏÉâÏÉÅ", Color, ImGuiColorEditFlags_RGB | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR))
 								{
 									m_LightArray[SelectionData.Extra]->SetInstanceColor(SelectionData.Name, 
 										XMVectorSet(Color[0], Color[1], Color[2], 1.0f));
@@ -6807,7 +6807,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									ImGui::AlignTextToFramePadding();
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Orientation));
 									ImGui::SameLine(ItemsOffsetX);
-									if (ImGui::DragFloat3(u8"##πÊ«‚", Direction, 0.01f, -1.0f, +1.0f, "%.3f"))
+									if (ImGui::DragFloat3(u8"##Î∞©Ìñ•", Direction, 0.01f, -1.0f, +1.0f, "%.3f"))
 									{
 										SpotLight->SetInstanceDirection(SelectionData.Name,
 											XMVectorSet(Direction[0], Direction[1], Direction[2], 0.0f));
@@ -6818,7 +6818,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 								ImGui::AlignTextToFramePadding();
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Range));
 								ImGui::SameLine(ItemsOffsetX);
-								if (ImGui::DragFloat(u8"##π¸¿ß", &Range, 0.1f, 1.0f, 20.0f, "%.1f"))
+								if (ImGui::DragFloat(u8"##Î≤îÏúÑ", &Range, 0.1f, 1.0f, 20.0f, "%.1f"))
 								{
 									m_LightArray[SelectionData.Extra]->SetInstanceRange(SelectionData.Name, Range);
 								}
@@ -6850,7 +6850,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 							ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Translation));
 							ImGui::SameLine(ItemsOffsetX);
 							XMVECTOR MultipleTranslation{};
-							if (ImGui::DragFloat3(u8"##¿ßƒ°", MultipleTranslation.m128_f32))
+							if (ImGui::DragFloat3(u8"##ÏúÑÏπò", MultipleTranslation.m128_f32))
 							{
 								if (XMVectorGetX(MultipleTranslation))
 								{
@@ -6876,7 +6876,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 					ImGui::EndTabItem();
 				}
 
-				// ¡ˆ«¸ ≈«
+				// ÏßÄÌòï ÌÉ≠
 				static bool bShowFoliageClusterGenerator{ false };
 				if (ImGui::BeginTabItem(GUI_STRING_PROPERTY_EDITOR(EGUIString_PropertyEditor::Tab_Terrain)))
 				{
@@ -6919,7 +6919,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 							ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::TerrainTessellationFactor));
 							ImGui::SameLine(ItemsOffsetX);
 							float TerrainTessFactor{ Terrain->GetTerrainTessFactor() };
-							if (ImGui::SliderFloat(u8"##¡ˆ«¸ ≈◊ºø∑π¿Ãº« ∞Ëºˆ", &TerrainTessFactor,
+							if (ImGui::SliderFloat(u8"##ÏßÄÌòï ÌÖåÏÖÄÎ†àÏù¥ÏÖò Í≥ÑÏàò", &TerrainTessFactor,
 								CTerrain::KTessFactorMin, CTerrain::KTessFactorMax, "%.1f"))
 							{
 								Terrain->SetTerrainTessFactor(TerrainTessFactor);
@@ -6931,7 +6931,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 							ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DrawWater));
 							ImGui::SameLine(ItemsOffsetX);
 							bool bDrawWater{ Terrain->ShouldDrawWater() };
-							if (ImGui::Checkbox(u8"##π∞ ±◊∏Æ±‚", &bDrawWater))
+							if (ImGui::Checkbox(u8"##Î¨º Í∑∏Î¶¨Í∏∞", &bDrawWater))
 							{
 								Terrain->ShouldDrawWater(bDrawWater);
 							}
@@ -6940,7 +6940,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 							ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::WaterYPosition));
 							ImGui::SameLine(ItemsOffsetX);
 							float WaterHeight{ Terrain->GetWaterHeight() };
-							if (ImGui::DragFloat(u8"##π∞ ≥Ù¿Ã", &WaterHeight, CTerrain::KWaterHeightUnit,
+							if (ImGui::DragFloat(u8"##Î¨º ÎÜíÏù¥", &WaterHeight, CTerrain::KWaterHeightUnit,
 								CTerrain::KWaterMinHeight, CTerrain::KWaterMaxHeight, "%.1f"))
 							{
 								Terrain->SetWaterHeight(WaterHeight);
@@ -6950,7 +6950,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 							ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::WaterTessellationFactor));
 							ImGui::SameLine(ItemsOffsetX);
 							float WaterTessFactor{ Terrain->GetWaterTessFactor() };
-							if (ImGui::SliderFloat(u8"##π∞ ≈◊ºø∑π¿Ãº« ∞Ëºˆ", &WaterTessFactor,
+							if (ImGui::SliderFloat(u8"##Î¨º ÌÖåÏÖÄÎ†àÏù¥ÏÖò Í≥ÑÏàò", &WaterTessFactor,
 								CTerrain::KTessFactorMin, CTerrain::KTessFactorMax, "%.1f"))
 							{
 								Terrain->SetWaterTessFactor(WaterTessFactor);
@@ -6993,7 +6993,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::HeightPrime));
 								ImGui::SameLine(ItemsOffsetX);
 								float TerrainSetHeightValue{ Terrain->GetSetHeightValue() };
-								if (ImGui::SliderFloat(u8"##¡ˆ¡§«“ ≥Ù¿Ã", &TerrainSetHeightValue,
+								if (ImGui::SliderFloat(u8"##ÏßÄÏ†ïÌï† ÎÜíÏù¥", &TerrainSetHeightValue,
 									CTerrain::KMinHeight, CTerrain::KMaxHeight, "%.1f"))
 								{
 									Terrain->SetSetHeightValue(TerrainSetHeightValue);
@@ -7005,7 +7005,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::MaskingLayer));
 								ImGui::SameLine(ItemsOffsetX);
 								int TerrainMaskingLayer{ (int)Terrain->GetMaskingLayer() };
-								if (ImGui::SliderInt(u8"##∏∂Ω∫≈∑ ∑π¿ÃæÓ", &TerrainMaskingLayer, 0, CTerrain::KMaterialMaxCount - 2))
+								if (ImGui::SliderInt(u8"##ÎßàÏä§ÌÇπ Î†àÏù¥Ïñ¥", &TerrainMaskingLayer, 0, CTerrain::KMaterialMaxCount - 2))
 								{
 									switch (TerrainMaskingLayer)
 									{
@@ -7030,7 +7030,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::MaskingRatio));
 								ImGui::SameLine(ItemsOffsetX);
 								float TerrainMaskingRatio{ Terrain->GetMaskingRatio() };
-								if (ImGui::SliderFloat(u8"##∏∂Ω∫≈∑ πË«’ ∫Ò¿≤", &TerrainMaskingRatio,
+								if (ImGui::SliderFloat(u8"##ÎßàÏä§ÌÇπ Î∞∞Ìï© ÎπÑÏú®", &TerrainMaskingRatio,
 									CTerrain::KMaskingMinRatio, CTerrain::KMaskingMaxRatio, "%.3f"))
 								{
 									Terrain->SetMaskingRatio(TerrainMaskingRatio);
@@ -7040,7 +7040,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 								ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::MaskingAttenuation));
 								ImGui::SameLine(ItemsOffsetX);
 								float TerrainMaskingAttenuation{ Terrain->GetMaskingAttenuation() };
-								if (ImGui::SliderFloat(u8"##∏∂Ω∫≈∑ ∞®ºË", &TerrainMaskingAttenuation,
+								if (ImGui::SliderFloat(u8"##ÎßàÏä§ÌÇπ Í∞êÏá†", &TerrainMaskingAttenuation,
 									CTerrain::KMaskingMinAttenuation, CTerrain::KMaskingMaxAttenuation, "%.3f"))
 								{
 									Terrain->SetMaskingAttenuation(TerrainMaskingAttenuation);
@@ -7066,7 +7066,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::FoliageDensity));
 									ImGui::SameLine(ItemsOffsetX);
 									float FoliageDenstiy{ Terrain->GetFoliageDenstiy() };
-									if (ImGui::SliderFloat(u8"##√ ∏Òπ–µµ", &FoliageDenstiy, 0.0f, 1.0f, "%.2f"))
+									if (ImGui::SliderFloat(u8"##Ï¥àÎ™©Î∞ÄÎèÑ", &FoliageDenstiy, 0.0f, 1.0f, "%.2f"))
 									{
 										Terrain->SetFoliageDensity(FoliageDenstiy);
 									}
@@ -7075,7 +7075,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::WindVelocity));
 									ImGui::SameLine(ItemsOffsetX);
 									XMFLOAT3 WindVelocity{}; DirectX::XMStoreFloat3(&WindVelocity, Terrain->GetWindVelocity());
-									if (ImGui::SliderFloat3(u8"##πŸ∂˜º”µµ", &WindVelocity.x,
+									if (ImGui::SliderFloat3(u8"##Î∞îÎûåÏÜçÎèÑ", &WindVelocity.x,
 										CTerrain::KMinWindVelocityElement, CTerrain::KMaxWindVelocityElement, "%.2f"))
 									{
 										Terrain->SetWindVelocity(WindVelocity);
@@ -7086,7 +7086,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 									ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::WindRadius));
 									ImGui::SameLine(ItemsOffsetX);
 									float WindRadius{ Terrain->GetWindRadius() };
-									if (ImGui::SliderFloat(u8"##πŸ∂˜π›¡ˆ∏ß", &WindRadius,
+									if (ImGui::SliderFloat(u8"##Î∞îÎûåÎ∞òÏßÄÎ¶Ñ", &WindRadius,
 										CTerrain::KMinWindRadius, CTerrain::KMaxWindRadius, "%.2f"))
 									{
 										Terrain->SetWindRadius(WindRadius);
@@ -7098,7 +7098,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 							ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::SelectionRadius));
 							ImGui::SameLine(ItemsOffsetX);
 							float TerrainMaskingRadius{ Terrain->GetSelectionRadius() };
-							if (ImGui::SliderFloat(u8"##º±≈√ π›¡ˆ∏ß", &TerrainMaskingRadius,
+							if (ImGui::SliderFloat(u8"##ÏÑ†ÌÉù Î∞òÏßÄÎ¶Ñ", &TerrainMaskingRadius,
 								CTerrain::KMinSelectionRadius, CTerrain::KMaxSelectionRadius, "%.1f"))
 							{
 								Terrain->SetSelectionRadius(TerrainMaskingRadius);
@@ -7128,7 +7128,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						static CMaterialData* capturedMaterialData{};
 						static CMaterialTextureSet* capturedMaterialTextureSet{};
 						static ETextureType ecapturedTextureType{};
-						if (!ImGui::IsPopupOpen(u8"≈ÿΩ∫√≥≈Ωªˆ±‚")) m_EditorGUIBools.bShowPopupMaterialTextureExplorer = false;
+						if (!ImGui::IsPopupOpen(u8"ÌÖçÏä§Ï≤òÌÉêÏÉâÍ∏∞")) m_EditorGUIBools.bShowPopupMaterialTextureExplorer = false;
 
 						for (size_t iMaterial = 0; iMaterial < Terrain->GetMaterialCount(); ++iMaterial)
 						{
@@ -7159,7 +7159,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 					ImGui::EndTabItem();
 				}
 
-				// ### √ ∏Ò ≈¨∑ØΩ∫≈Õ ª˝º∫±‚ ¿©µµøÏ ###
+				// ### Ï¥àÎ™© ÌÅ¥Îü¨Ïä§ÌÑ∞ ÏÉùÏÑ±Í∏∞ ÏúàÎèÑÏö∞ ###
 				if (bShowFoliageClusterGenerator) ImGui::OpenPopup(GUI_STRING_CONTENT(EGUIString_Content::FoliageGenerator));
 				if (ImGui::BeginPopupModal(GUI_STRING_CONTENT(EGUIString_Content::FoliageGenerator), 
 					nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
@@ -7192,7 +7192,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::FoliagePlacingDetail));
 
 						ImGui::SetNextItemWidth(KItemsWidth - 100);
-						ImGui::SliderInt(u8"##πËƒ° µ≈◊¿œ", (int*)&PlacingDetail,
+						ImGui::SliderInt(u8"##Î∞∞Ïπò ÎîîÌÖåÏùº", (int*)&PlacingDetail,
 							CTerrain::KMinFoliagePlacingDetail, CTerrain::KMaxFoliagePlacingDetail);
 
 						ImGui::Separator();
@@ -7255,7 +7255,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 					ImGui::EndPopup();
 				}
 
-				// ¿Â∏È ≈«
+				// Ïû•Î©¥ ÌÉ≠
 				if (ImGui::BeginTabItem(GUI_STRING_PROPERTY_EDITOR(EGUIString_PropertyEditor::Tab_Scene)))
 				{
 					static constexpr float KLabelsWidth{ 240 };
@@ -7271,21 +7271,21 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						ImGui::AlignTextToFramePadding();
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::WorldFloorHeight));
 						ImGui::SameLine(ItemsOffsetX);
-						if (ImGui::DragFloat(u8"##World πŸ¥⁄ ≥Ù¿Ã", &FloorHeight, 0.1f))
+						if (ImGui::DragFloat(u8"##World Î∞îÎã• ÎÜíÏù¥", &FloorHeight, 0.1f))
 						{
 							m_PhysicsEngine.SetWorldFloorHeight(FloorHeight);
 						}
 
 						ImGui::Separator();
 
-						// ¿Â∏È ¿Á¡˙
+						// Ïû•Î©¥ Ïû¨Ïßà
 						ImGui::AlignTextToFramePadding();
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::SceneMaterial));
 						{
 							static CMaterialData* capturedMaterialData{};
 							static CMaterialTextureSet* capturedMaterialTextureSet{};
 							static ETextureType eCapturedTextureType{};
-							if (!ImGui::IsPopupOpen(u8"≈ÿΩ∫√≥≈Ωªˆ±‚")) m_EditorGUIBools.bShowPopupMaterialTextureExplorer = false;
+							if (!ImGui::IsPopupOpen(u8"ÌÖçÏä§Ï≤òÌÉêÏÉâÍ∏∞")) m_EditorGUIBools.bShowPopupMaterialTextureExplorer = false;
 
 							if (DrawEditorGUIWindowPropertyEditor_MaterialData(*m_SceneMaterial, m_SceneMaterialTextureSet.get(),
 								eCapturedTextureType, ItemsWidth, true))
@@ -7306,7 +7306,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 
 						ImGui::Separator();
 
-						// ¿Œ∞¯¡ˆ¥… ∆–≈œ
+						// Ïù∏Í≥µÏßÄÎä• Ìå®ÌÑ¥
 						ImGui::AlignTextToFramePadding();
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::IntelligencePattern));
 						if (ImGui::TreeNodeEx(GUI_STRING_CONTENT(EGUIString_Content::PatternList), ImGuiTreeNodeFlags_DefaultOpen))
@@ -7340,7 +7340,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 								ChildSizeMax.x -= 15;
 								ChildSizeMax.y -= 50;
 
-								ImGui::BeginChild(u8"∏ﬁ¥∫", ImVec2(ChildSizeMax.x, 30));
+								ImGui::BeginChild(u8"Î©îÎâ¥", ImVec2(ChildSizeMax.x, 30));
 								{
 									if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::Close)))
 									{
@@ -7374,7 +7374,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						}
 
 
-						// ∏ÛΩ∫≈Õ Ω∫∆˜≥ 
+						// Î™¨Ïä§ÌÑ∞ Ïä§Ìè¨ÎÑà
 						ImGui::AlignTextToFramePadding();
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::MonsterSpawner));
 						if (ImGui::TreeNodeEx(GUI_STRING_CONTENT(EGUIString_Content::MonsterSpawnerList), ImGuiTreeNodeFlags_DefaultOpen))
@@ -7615,7 +7615,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 					ImGui::PopItemWidth();
 				}
 
-				// IBL ≈«
+				// IBL ÌÉ≠
 				if (ImGui::BeginTabItem(GUI_STRING_PROPERTY_EDITOR(EGUIString_PropertyEditor::Tab_IBL)))
 				{
 					static constexpr float KLabelsWidth{ 220 };
@@ -7853,7 +7853,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 					ImGui::EndTabItem();
 				}
 
-				// ±‚≈∏ ≈«
+				// Í∏∞ÌÉÄ ÌÉ≠
 				if (ImGui::BeginTabItem(GUI_STRING_PROPERTY_EDITOR(EGUIString_PropertyEditor::Tab_ETC)))
 				{
 					const XMVECTOR& KDirectionalLightDirection{ GetDirectionalLightDirection() };
@@ -7873,7 +7873,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 							ImGui::AlignTextToFramePadding();
 							ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DirectionalLightPosition));
 							ImGui::SameLine(ItemsOffsetX);
-							if (ImGui::DragFloat3(u8"##Directional Light ¿ßƒ°", DirectionalLightDirection, 0.02f, -1.0f, +1.0f, "%.2f"))
+							if (ImGui::DragFloat3(u8"##Directional Light ÏúÑÏπò", DirectionalLightDirection, 0.02f, -1.0f, +1.0f, "%.2f"))
 							{
 								SetDirectionalLightDirection(XMVectorSet(DirectionalLightDirection[0], DirectionalLightDirection[1],
 									DirectionalLightDirection[2], 0.0f));
@@ -7883,7 +7883,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 							ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DirectionalLightColor));
 							ImGui::SameLine(ItemsOffsetX);
 							XMFLOAT3 DirectionalLightColor{ GetDirectionalLightColor() };
-							if (ImGui::ColorEdit3(u8"##Directional Light ªˆªÛ (HDR)", &DirectionalLightColor.x,
+							if (ImGui::ColorEdit3(u8"##Directional Light ÏÉâÏÉÅ (HDR)", &DirectionalLightColor.x,
 								ImGuiColorEditFlags_RGB | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR))
 							{
 								SetDirectionalLightColor(DirectionalLightColor);
@@ -7893,7 +7893,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 							ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::AmbientLightColor));
 							ImGui::SameLine(ItemsOffsetX);
 							XMFLOAT3 AmbientLightColor{ GetAmbientLightColor() };
-							if (ImGui::ColorEdit3(u8"##Ambient Light ªˆªÛ", &AmbientLightColor.x, ImGuiColorEditFlags_RGB))
+							if (ImGui::ColorEdit3(u8"##Ambient Light ÏÉâÏÉÅ", &AmbientLightColor.x, ImGuiColorEditFlags_RGB))
 							{
 								SetAmbientlLight(AmbientLightColor, GetAmbientLightIntensity());
 							}
@@ -7902,7 +7902,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 							ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::AmbientLightIntensity));
 							ImGui::SameLine(ItemsOffsetX);
 							float AmbientLightIntensity{ GetAmbientLightIntensity() };
-							if (ImGui::DragFloat(u8"##Ambient Light ∞≠µµ", &AmbientLightIntensity, 0.02f, 0.0f, +1.0f, "%.2f"))
+							if (ImGui::DragFloat(u8"##Ambient Light Í∞ïÎèÑ", &AmbientLightIntensity, 0.02f, 0.0f, +1.0f, "%.2f"))
 							{
 								SetAmbientlLight(GetAmbientLightColor(), AmbientLightIntensity);
 							}
@@ -7911,7 +7911,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 							ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Exposure_HDR));
 							ImGui::SameLine(ItemsOffsetX);
 							float Exposure{ GetExposure() };
-							if (ImGui::DragFloat(u8"##≥Î√‚", &Exposure, 0.02f, 0.1f, +10.0f, "%.2f"))
+							if (ImGui::DragFloat(u8"##ÎÖ∏Ï∂ú", &Exposure, 0.02f, 0.1f, +10.0f, "%.2f"))
 							{
 								SetExposure(Exposure);
 							}
@@ -7943,7 +7943,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::WireFrame));
 						ImGui::SameLine(ItemsOffsetX);
 						bool bDrawWireFrame{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::DrawWireFrame) };
-						if (ImGui::Checkbox(u8"##øÕ¿ÃæÓ «¡∑π¿”", &bDrawWireFrame))
+						if (ImGui::Checkbox(u8"##ÏôÄÏù¥Ïñ¥ ÌîÑÎ†àÏûÑ", &bDrawWireFrame))
 						{
 							ToggleRenderingFlag(EFlagsRendering::DrawWireFrame);
 						}
@@ -7952,7 +7952,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DrawNormals));
 						ImGui::SameLine(ItemsOffsetX);
 						bool bDrawNormals{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::DrawNormals) };
-						if (ImGui::Checkbox(u8"##π˝º± «•Ω√", &bDrawNormals))
+						if (ImGui::Checkbox(u8"##Î≤ïÏÑ† ÌëúÏãú", &bDrawNormals))
 						{
 							ToggleRenderingFlag(EFlagsRendering::DrawNormals);
 						}
@@ -7961,7 +7961,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DrawMiniAxes));
 						ImGui::SameLine(ItemsOffsetX);
 						bool bDrawMiniAxes{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::DrawMiniAxes) };
-						if (ImGui::Checkbox(u8"##»≠∏È ªÛ¥‹ø° ¡¬«•√‡ «•Ω√", &bDrawMiniAxes))
+						if (ImGui::Checkbox(u8"##ÌôîÎ©¥ ÏÉÅÎã®Ïóê Ï¢åÌëúÏ∂ï ÌëúÏãú", &bDrawMiniAxes))
 						{
 							ToggleRenderingFlag(EFlagsRendering::DrawMiniAxes);
 						}
@@ -7970,7 +7970,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DrawBoundingVolumes));
 						ImGui::SameLine(ItemsOffsetX);
 						bool bDrawBoundingVolumes{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::DrawBoundingVolumes) };
-						if (ImGui::Checkbox(u8"##Bounding Volume «•Ω√", &bDrawBoundingVolumes))
+						if (ImGui::Checkbox(u8"##Bounding Volume ÌëúÏãú", &bDrawBoundingVolumes))
 						{
 							ToggleRenderingFlag(EFlagsRendering::DrawBoundingVolumes);
 						}
@@ -7980,7 +7980,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DrawTerrainHeightMap));
 						ImGui::SameLine(ItemsOffsetX);
 						bool bDrawTerrainHeightMapTexture{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::DrawTerrainHeightMapTexture) };
-						if (ImGui::Checkbox(u8"##¡ˆ«¸ ≥Ù¿Ã∏  «•Ω√", &bDrawTerrainHeightMapTexture))
+						if (ImGui::Checkbox(u8"##ÏßÄÌòï ÎÜíÏù¥Îßµ ÌëúÏãú", &bDrawTerrainHeightMapTexture))
 						{
 							ToggleRenderingFlag(EFlagsRendering::DrawTerrainHeightMapTexture);
 						}
@@ -7989,7 +7989,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DrawTerrainMaskingMap));
 						ImGui::SameLine(ItemsOffsetX);
 						bool bDrawTerrainMaskingTexture{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::DrawTerrainMaskingTexture) };
-						if (ImGui::Checkbox(u8"##¡ˆ«¸ ∏∂Ω∫≈∑∏  «•Ω√", &bDrawTerrainMaskingTexture))
+						if (ImGui::Checkbox(u8"##ÏßÄÌòï ÎßàÏä§ÌÇπÎßµ ÌëúÏãú", &bDrawTerrainMaskingTexture))
 						{
 							ToggleRenderingFlag(EFlagsRendering::DrawTerrainMaskingTexture);
 						}
@@ -7998,7 +7998,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DrawTerrainFoliageMap));
 						ImGui::SameLine(ItemsOffsetX);
 						bool bDrawTerrainFoliagePlacingTexture{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::DrawTerrainFoliagePlacingTexture) };
-						if (ImGui::Checkbox(u8"##¡ˆ«¸ √ ∏Ò∏  «•Ω√", &bDrawTerrainFoliagePlacingTexture))
+						if (ImGui::Checkbox(u8"##ÏßÄÌòï Ï¥àÎ™©Îßµ ÌëúÏãú", &bDrawTerrainFoliagePlacingTexture))
 						{
 							ToggleRenderingFlag(EFlagsRendering::DrawTerrainFoliagePlacingTexture);
 						}
@@ -8007,7 +8007,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DrawIdentifiers));
 						ImGui::SameLine(ItemsOffsetX);
 						bool bDrawIdentifiers{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::DrawIdentifiers) };
-						if (ImGui::Checkbox(u8"##æ∆¿Ãµ «•Ω√", &bDrawIdentifiers))
+						if (ImGui::Checkbox(u8"##ÏïÑÏù¥Îîî ÌëúÏãú", &bDrawIdentifiers))
 						{
 							ToggleRenderingFlag(EFlagsRendering::DrawIdentifiers);
 						}
@@ -8020,19 +8020,19 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 
 						/*
 						ImGui::AlignTextToFramePadding();
-						ImGui::Text(u8"¡∂∏Ì ¿˚øÎ");
+						ImGui::Text(u8"Ï°∞Î™Ö Ï†ÅÏö©");
 						ImGui::SameLine(ItemsOffsetX);
 						bool bUseLighting{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::UseLighting) };
-						if (ImGui::Checkbox(u8"##¡∂∏Ì ¿˚øÎ", &bUseLighting))
+						if (ImGui::Checkbox(u8"##Ï°∞Î™Ö Ï†ÅÏö©", &bUseLighting))
 						{
 							ToggleGameRenderingFlags(EFlagsRendering::UseLighting);
 						}
 
 						ImGui::AlignTextToFramePadding();
-						ImGui::Text(u8"π∞∏Æ ±‚π› ∑ª¥ı∏µ ªÁøÎ");
+						ImGui::Text(u8"Î¨ºÎ¶¨ Í∏∞Î∞ò Î†åÎçîÎßÅ ÏÇ¨Ïö©");
 						ImGui::SameLine(ItemsOffsetX);
 						bool bUsePhysicallyBasedRendering{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::UsePhysicallyBasedRendering) };
-						if (ImGui::Checkbox(u8"##π∞∏Æ ±‚π› ∑ª¥ı∏µ ªÁøÎ", &bUsePhysicallyBasedRendering))
+						if (ImGui::Checkbox(u8"##Î¨ºÎ¶¨ Í∏∞Î∞ò Î†åÎçîÎßÅ ÏÇ¨Ïö©", &bUsePhysicallyBasedRendering))
 						{
 							ToggleGameRenderingFlags(EFlagsRendering::UsePhysicallyBasedRendering);
 						}
@@ -8042,7 +8042,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DrawLightingVolumes));
 						ImGui::SameLine(ItemsOffsetX);
 						bool bDrawLightVolumes{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::DrawLightVolumes) };
-						if (ImGui::Checkbox(u8"##±§ø¯ ∫º∑˝ «•Ω√", &bDrawLightVolumes))
+						if (ImGui::Checkbox(u8"##Í¥ëÏõê Î≥ºÎ•® ÌëúÏãú", &bDrawLightVolumes))
 						{
 							ToggleRenderingFlag(EFlagsRendering::DrawLightVolumes);
 						}
@@ -8051,7 +8051,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::Draw3DGizmos));
 						ImGui::SameLine(ItemsOffsetX);
 						bool bUse3DGizmos{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::Use3DGizmos) };
-						if (ImGui::Checkbox(u8"##3D Gizmo «•Ω√", &bUse3DGizmos))
+						if (ImGui::Checkbox(u8"##3D Gizmo ÌëúÏãú", &bUse3DGizmos))
 						{
 							ToggleRenderingFlag(EFlagsRendering::Use3DGizmos);
 						}
@@ -8060,7 +8060,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DrawPickingData));
 						ImGui::SameLine(ItemsOffsetX);
 						bool bDrawPickingData{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::DrawPickingData) };
-						if (ImGui::Checkbox(u8"##««≈∑ µ•¿Ã≈Õ «•Ω√", &bDrawPickingData))
+						if (ImGui::Checkbox(u8"##ÌîºÌÇπ Îç∞Ïù¥ÌÑ∞ ÌëúÏãú", &bDrawPickingData))
 						{
 							ToggleRenderingFlag(EFlagsRendering::DrawPickingData);
 						}
@@ -8069,7 +8069,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DrawGrid));
 						ImGui::SameLine(ItemsOffsetX);
 						bool bDrawGrid{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::DrawGrid) };
-						if (ImGui::Checkbox(u8"##±◊∏ÆµÂ «•Ω√", &bDrawGrid))
+						if (ImGui::Checkbox(u8"##Í∑∏Î¶¨Îìú ÌëúÏãú", &bDrawGrid))
 						{
 							ToggleRenderingFlag(EFlagsRendering::DrawGrid);
 						}
@@ -8078,7 +8078,7 @@ void CGame::DrawEditorGUIWindowPropertyEditor()
 						ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::DrawShadowMap));
 						ImGui::SameLine(ItemsOffsetX);
 						bool bDrawDirectionalLightShadowMap{ EFLAG_HAS(m_eFlagsRendering, EFlagsRendering::DrawDirectionalLightShadowMap) };
-						if (ImGui::Checkbox(u8"##DirectionalLight ±◊∏≤¿⁄∏  «•Ω√", &bDrawDirectionalLightShadowMap))
+						if (ImGui::Checkbox(u8"##DirectionalLight Í∑∏Î¶ºÏûêÎßµ ÌëúÏãú", &bDrawDirectionalLightShadowMap))
 						{
 							ToggleRenderingFlag(EFlagsRendering::DrawDirectionalLightShadowMap);
 						}
@@ -8124,7 +8124,7 @@ bool CGame::DrawEditorGUIWindowPropertyEditor_MaterialData(CMaterialData& Materi
 			}
 			ImGui::SameLine(ItemsOffsetX);
 			XMFLOAT3 DiffuseColor{ MaterialData.DiffuseColor() };
-			if (ImGui::ColorEdit3(u8"##Diffuse ªˆªÛ", &DiffuseColor.x, ImGuiColorEditFlags_RGB))
+			if (ImGui::ColorEdit3(u8"##Diffuse ÏÉâÏÉÅ", &DiffuseColor.x, ImGuiColorEditFlags_RGB))
 			{
 				MaterialData.DiffuseColor(DiffuseColor);
 			}
@@ -8135,7 +8135,7 @@ bool CGame::DrawEditorGUIWindowPropertyEditor_MaterialData(CMaterialData& Materi
 				ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::AmbientColor));
 				ImGui::SameLine(ItemsOffsetX);
 				XMFLOAT3 AmbientColor{ MaterialData.AmbientColor() };
-				if (ImGui::ColorEdit3(u8"##Ambient ªˆªÛ", &AmbientColor.x, ImGuiColorEditFlags_RGB))
+				if (ImGui::ColorEdit3(u8"##Ambient ÏÉâÏÉÅ", &AmbientColor.x, ImGuiColorEditFlags_RGB))
 				{
 					MaterialData.AmbientColor(AmbientColor);
 				}
@@ -8147,7 +8147,7 @@ bool CGame::DrawEditorGUIWindowPropertyEditor_MaterialData(CMaterialData& Materi
 				ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::SpecularColor));
 				ImGui::SameLine(ItemsOffsetX);
 				XMFLOAT3 SpecularColor{ MaterialData.SpecularColor() };
-				if (ImGui::ColorEdit3(u8"##Specular ªˆªÛ", &SpecularColor.x, ImGuiColorEditFlags_RGB))
+				if (ImGui::ColorEdit3(u8"##Specular ÏÉâÏÉÅ", &SpecularColor.x, ImGuiColorEditFlags_RGB))
 				{
 					MaterialData.SpecularColor(SpecularColor);
 				}
@@ -8156,7 +8156,7 @@ bool CGame::DrawEditorGUIWindowPropertyEditor_MaterialData(CMaterialData& Materi
 				ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::SpecularExponent));
 				ImGui::SameLine(ItemsOffsetX);
 				float SpecularExponent{ MaterialData.SpecularExponent() };
-				if (ImGui::DragFloat(u8"##Specular ¡ˆºˆ", &SpecularExponent, 0.1f, 
+				if (ImGui::DragFloat(u8"##Specular ÏßÄÏàò", &SpecularExponent, 0.1f, 
 					CMaterialData::KSpecularMinExponent, CMaterialData::KSpecularMaxExponent, "%.1f"))
 				{
 					MaterialData.SpecularExponent(SpecularExponent);
@@ -8166,7 +8166,7 @@ bool CGame::DrawEditorGUIWindowPropertyEditor_MaterialData(CMaterialData& Materi
 				ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::SpecularIntensity));
 				ImGui::SameLine(ItemsOffsetX);
 				float SpecularIntensity{ MaterialData.SpecularIntensity() };
-				if (ImGui::DragFloat(u8"##Specular ∞≠µµ", &SpecularIntensity, 0.01f, 0.0f, 1.0f, "%.2f"))
+				if (ImGui::DragFloat(u8"##Specular Í∞ïÎèÑ", &SpecularIntensity, 0.01f, 0.0f, 1.0f, "%.2f"))
 				{
 					MaterialData.SpecularIntensity(SpecularIntensity);
 				}
@@ -8325,7 +8325,7 @@ void CGame::DrawEditorGUIPopupMaterialNameChanger(CMaterialData*& capturedMateri
 	static char OldName[KAssetNameMaxLength]{};
 	static char NewName[KAssetNameMaxLength]{};
 
-	// ### ¿Á¡˙ ¿Ã∏ß ∫Ø∞Ê ¿©µµøÏ ###
+	// ### Ïû¨Ïßà Ïù¥Î¶Ñ Î≥ÄÍ≤Ω ÏúàÎèÑÏö∞ ###
 	if (m_EditorGUIBools.bShowPopupMaterialNameChanger) ImGui::OpenPopup(GUI_STRING_CONTENT(EGUIString_Content::ChangeMaterialName));
 
 	ImGui::SetNextWindowSize(ImVec2(240, 100), ImGuiCond_Always);
@@ -8335,7 +8335,7 @@ void CGame::DrawEditorGUIPopupMaterialNameChanger(CMaterialData*& capturedMateri
 		ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::NewName));
 		ImGui::SameLine(80.0f);
 		ImGui::SetNextItemWidth(160);
-		bool bOK{ ImGui::InputText(u8"##ªı ¿Ã∏ß", NewName, KAssetNameMaxLength, ImGuiInputTextFlags_EnterReturnsTrue) };
+		bool bOK{ ImGui::InputText(u8"##ÏÉà Ïù¥Î¶Ñ", NewName, KAssetNameMaxLength, ImGuiInputTextFlags_EnterReturnsTrue) };
 
 		ImGui::Separator();
 
@@ -8367,9 +8367,9 @@ bool CGame::DrawEditorGUIPopupMaterialTextureExplorer(CMaterialData* const captu
 {
 	bool bResult{ false };
 
-	// ### ≈ÿΩ∫√≥ ≈Ωªˆ±‚ ¿©µµøÏ ###
-	if (m_EditorGUIBools.bShowPopupMaterialTextureExplorer) ImGui::OpenPopup(u8"≈ÿΩ∫√≥≈Ωªˆ±‚");
-	if (ImGui::BeginPopup(u8"≈ÿΩ∫√≥≈Ωªˆ±‚", ImGuiWindowFlags_AlwaysAutoResize))
+	// ### ÌÖçÏä§Ï≤ò ÌÉêÏÉâÍ∏∞ ÏúàÎèÑÏö∞ ###
+	if (m_EditorGUIBools.bShowPopupMaterialTextureExplorer) ImGui::OpenPopup(u8"ÌÖçÏä§Ï≤òÌÉêÏÉâÍ∏∞");
+	if (ImGui::BeginPopup(u8"ÌÖçÏä§Ï≤òÌÉêÏÉâÍ∏∞", ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ID3D11ShaderResourceView* SRV{};
 		if (capturedMaterialTextureSet) SRV = capturedMaterialTextureSet->GetTextureSRV(eSelectedTextureType);
@@ -8406,7 +8406,7 @@ bool CGame::DrawEditorGUIPopupMaterialTextureExplorer(CMaterialData* const captu
 
 void CGame::DrawEditorGUIWindowSceneEditor()
 {
-	// ### ¿Â∏È ∆Ì¡˝±‚ ¿©µµøÏ ###
+	// ### Ïû•Î©¥ Ìé∏ÏßëÍ∏∞ ÏúàÎèÑÏö∞ ###
 	if (m_EditorGUIBools.bShowWindowSceneEditor)
 	{
 		const auto& mapObject3D{ GetObject3DMap() };
@@ -8418,7 +8418,7 @@ void CGame::DrawEditorGUIWindowSceneEditor()
 		if (ImGui::Begin(GUI_STRING_MENU(EGUIString_Menu::Window_SceneEditor), 
 			&m_EditorGUIBools.bShowWindowSceneEditor, ImGuiWindowFlags_AlwaysAutoResize))
 		{
-			// ¿Â∏È ≥ª∫∏≥ª±‚
+			// Ïû•Î©¥ ÎÇ¥Î≥¥ÎÇ¥Í∏∞
 			if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::ClearScene)))
 			{
 				EmptyScene();
@@ -8426,7 +8426,7 @@ void CGame::DrawEditorGUIWindowSceneEditor()
 
 			ImGui::SameLine();
 
-			// ¿Â∏È ≥ª∫∏≥ª±‚
+			// Ïû•Î©¥ ÎÇ¥Î≥¥ÎÇ¥Í∏∞
 			if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::SaveScene)))
 			{
 				static CFileDialog FileDialog{ GetSceneDirectory() };
@@ -8440,7 +8440,7 @@ void CGame::DrawEditorGUIWindowSceneEditor()
 
 			ImGui::SameLine();
 
-			// ¿Â∏È ∫“∑Øø¿±‚
+			// Ïû•Î©¥ Î∂àÎü¨Ïò§Í∏∞
 			if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::LoadScene)))
 			{
 				static CFileDialog FileDialog{ GetSceneDirectory() };
@@ -8455,7 +8455,7 @@ void CGame::DrawEditorGUIWindowSceneEditor()
 
 			ImGui::Separator();
 
-			// ø¿∫Í¡ß∆Æ √ﬂ∞°
+			// Ïò§Î∏åÏ†ùÌä∏ Ï∂îÍ∞Ä
 			if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::InsertObject)))
 			{
 				m_EditorGUIBools.bShowPopupObjectAdder = true;
@@ -8463,7 +8463,7 @@ void CGame::DrawEditorGUIWindowSceneEditor()
 
 			ImGui::SameLine();
 
-			// ø¿∫Í¡ß∆Æ ¿˙¿Â
+			// Ïò§Î∏åÏ†ùÌä∏ Ï†ÄÏû•
 			if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::SaveObject)))
 			{
 				static CFileDialog FileDialog{ GetAssetDirectory() };
@@ -8494,7 +8494,7 @@ void CGame::DrawEditorGUIWindowSceneEditor()
 
 			ImGui::SameLine();
 
-			// ø¿∫Í¡ß∆Æ ¡¶∞≈
+			// Ïò§Î∏åÏ†ùÌä∏ Ï†úÍ±∞
 			if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::_DeleteObject)))
 			{
 				DeleteSelectedObjects();
@@ -8511,7 +8511,7 @@ void CGame::DrawEditorGUIWindowSceneEditor()
 			static string CapturedInstanceName{};
 			if (ImGui::TreeNodeEx(GUI_STRING_CONTENT(EGUIString_Content::_3DObject), ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				// 3D ø¿∫Í¡ß∆Æ ∏Ò∑œ
+				// 3D Ïò§Î∏åÏ†ùÌä∏ Î™©Î°ù
 				int iObject3DPair{};
 				for (const auto& Object3DPair : mapObject3D)
 				{
@@ -8551,7 +8551,7 @@ void CGame::DrawEditorGUIWindowSceneEditor()
 
 					if (bIsNodeOpen)
 					{
-						// ¿ŒΩ∫≈œΩ∫ ∏Ò∑œ
+						// Ïù∏Ïä§ÌÑ¥Ïä§ Î™©Î°ù
 						if (Object3D->IsInstanced())
 						{
 							for (const auto& InstancePair : Object3D->GetInstanceNameToIndexMap())
@@ -8585,7 +8585,7 @@ void CGame::DrawEditorGUIWindowSceneEditor()
 
 					if ((SelectionData.eObjectType == EObjectType::Object3D || SelectionData.eObjectType == EObjectType::Object3DInstance))
 					{
-						// ¿ŒΩ∫≈œΩ∫ √ﬂ∞°
+						// Ïù∏Ïä§ÌÑ¥Ïä§ Ï∂îÍ∞Ä
 
 						ImGui::PushID(iObject3DPair * 2 + 0);
 						if (ImGui::Button(GUI_STRING_CONTENT(EGUIString_Content::Plus_Inst)))
@@ -8599,7 +8599,7 @@ void CGame::DrawEditorGUIWindowSceneEditor()
 
 					if (SelectionData.eObjectType == EObjectType::Object3DInstance)
 					{
-						// ¿ŒΩ∫≈œΩ∫ ¡¶∞≈
+						// Ïù∏Ïä§ÌÑ¥Ïä§ Ï†úÍ±∞
 
 						ImGui::SameLine();
 						ImGui::PushID(iObject3DPair * 2 + 1);
@@ -8653,7 +8653,7 @@ void CGame::DrawEditorGUIWindowSceneEditor()
 				ImGui::Text(GUI_STRING_CONTENT(EGUIString_Content::NewName));
 				ImGui::SameLine(80);
 				if (!ImGui::IsWindowAppearing()) ImGui::SetKeyboardFocusHere();
-				bOK = ImGui::InputText(u8"##¿Ã∏ß", NewName, KAssetNameMaxLength, ImGuiInputTextFlags_EnterReturnsTrue);
+				bOK = ImGui::InputText(u8"##Ïù¥Î¶Ñ", NewName, KAssetNameMaxLength, ImGuiInputTextFlags_EnterReturnsTrue);
 				
 				if (bOK && NewName[0] != '\0')
 				{
@@ -8694,7 +8694,7 @@ void CGame::DrawEditorGUIWindowSceneEditor()
 			
 			if (ImGui::TreeNodeEx(GUI_STRING_CONTENT(EGUIString_Content::_2DObject), ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				// 2D ø¿∫Í¡ß∆Æ ∏Ò∑œ
+				// 2D Ïò§Î∏åÏ†ùÌä∏ Î™©Î°ù
 				int iObject2DPair{};
 				for (const auto& Object2DPair : mapObject2D)
 				{
@@ -8730,7 +8730,7 @@ void CGame::DrawEditorGUIWindowSceneEditor()
 
 			if (ImGui::TreeNodeEx(GUI_STRING_CONTENT(EGUIString_Content::Camera), ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				// ƒ´∏ﬁ∂Û ∏Ò∑œ
+				// Ïπ¥Î©îÎùº Î™©Î°ù
 				for (const auto& CameraPair : mapCamera)
 				{
 					CCamera* const Camera{ GetCamera(CameraPair.first) };

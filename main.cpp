@@ -77,6 +77,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		Gui.CreateTextEdit("edit", SInt2(100, 30), Window);
 		CTextEdit* edit{ (CTextEdit*)Window->GetChild("edit") };
 		edit->SetOffset(SInt2(0, 100));
+
+		Gui.CreateButton("quit", SInt2(100, 30), Window);
+		Window->GetChild("quit")->SetOffset(SInt2(0, 140));
+		Window->GetChild("quit")->SetCaption(u8"Á¾·á");
+		Window->GetChild("quit")->SetCaptionColor(KDefaultFontColor);
 	}
 	
 	g_GUI = &Gui;
@@ -101,17 +106,21 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 			if (GetKeyState(VK_CONTROL) && (KeyDown == 'c' || KeyDown == 'C')) Game.CopySelectedObject();
 			if (GetKeyState(VK_CONTROL) && (KeyDown == 'v' || KeyDown == 'V')) Game.PasteCopiedObject();
 
-			if (Gui.HasEvent())
+			while (Gui.HasEvent())
 			{
 				auto Evenet{ Gui.GetEvent() };
 				auto& eEventType{ Evenet.eEventType };
 				
 				if (eEventType == EEventType::Clicked)
 				{
+					CWindow* const Window{ (CWindow*)Gui.GetWidget("wnd") };
 					if (Evenet.Widget == Gui.GetWidget("btn"))
 					{
-						CWindow* const Window{ (CWindow*)Gui.GetWidget("wnd") };
 						Window->Open();
+					}
+					else if (Evenet.Widget == Window->GetChild("quit"))
+					{
+						Game.Destroy();
 					}
 				}
 			}
