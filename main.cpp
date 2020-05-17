@@ -1,4 +1,4 @@
-#ifdef _DEBUG
+ï»¿#ifdef _DEBUG
 	#define _CRTDBG_MAP_ALLOC
 	#include <stdlib.h>
 	#include <crtdbg.h>
@@ -27,7 +27,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	/*CBFNTBaker Baker{};
 	Baker.AddCharRange(SCharRange(0, 0x33DD));
 	Baker.AddCharRange(SCharRange(0x4E00, 0x9FFF)); // CJK ideographs
-	Baker.AddCharRange(SCharRange(0xAC00, 0xD7A3)); // Korean [°¡, ÆR]
+	Baker.AddCharRange(SCharRange(0xAC00, 0xD7A3)); // Korean [ê°€, íž£]
 	Baker.AddCharRange(SCharRange(0xFF00, 0xFFEE)); // Full-width forms
 	Baker.BakeFont("Asset\\D2Coding.ttf", 16, "Asset");*/
 
@@ -35,7 +35,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	CGame Game{ hInstance, KGameWindowSize };
 	g_Game = &Game;
 
-	Game.CreateWin32(WndProc, u8"JEngine", true, false);
+	Game.CreateWin32(WndProc, u8"JEngine", true, true);
 
 	Game.SetRenderingFlags(CGame::EFlagsRendering::UseLighting | CGame::EFlagsRendering::DrawMiniAxes | CGame::EFlagsRendering::DrawGrid |
 		CGame::EFlagsRendering::DrawTerrainHeightMapTexture | CGame::EFlagsRendering::DrawTerrainMaskingTexture | CGame::EFlagsRendering::DrawIdentifiers |
@@ -46,8 +46,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	Game.CreateStaticSky(30.0f);
 
 	//Game.LoadScene("Scene\\mayan_dungeon.scene");
-	Game.LoadScene("Scene\\ai_test.scene");
-	Game.SetMode(CGame::EMode::Play);
+	//Game.LoadScene("Scene\\ai_test.scene");
+	//Game.SetMode(CGame::EMode::Play);
 
 
 	CGUI Gui{ Game.GetDevicePtr(), Game.GetDeviceContextPtr() };
@@ -55,23 +55,23 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	
 	Gui.CreateButton("btn", SInt2(96, 32));
 	Gui.GetWidget("btn")->SetOffset(SInt2(20, 20));
-	Gui.GetWidget("btn")->SetCaption(u8"½Ã½ºÅÛ");
+	Gui.GetWidget("btn")->SetCaption(u8"ì‹œìŠ¤í…œ");
 	Gui.GetWidget("btn")->SetCaptionColor(KDefaultFontColor);
 
 	{
 		Gui.CreateWindowWidget(CGUI::EWindowType::Default, "wnd");
 		CWindow* const Window{ (CWindow*)Gui.GetWidget("wnd") };
 		Window->SetOffset(SInt2(200, 40));
-		Window->SetCaption(u8"½ÃÇè¿ë Ã¢!");
+		Window->SetCaption(u8"ì‹œí—˜ìš© ì°½!");
 
-		Gui.CreateText("tx", SInt2(100, 30), u8"°¡³ª´Ùabc", Window);
+		Gui.CreateText("tx", SInt2(100, 30), u8"ê°€ë‚˜ë‹¤abc", Window);
 		CText* tx{ (CText*)Window->GetChild("tx") };
 		tx->SetBackgroundColor(SFloat4(1, 1, 1, 0.25f));
 
 		Gui.CreateImageButton(CGUI::EImageButtonType::Button, "imgbtn", SInt2(288, 72), Window);
 		Window->GetChild("imgbtn")->SetOffset(SInt2(20, 30));
 		Window->GetChild("imgbtn")->SetSelectionSize(SInt2(230, 60));
-		Window->GetChild("imgbtn")->SetCaption(u8"ÀÌ¹ÌÁö ¹öÆ°");
+		Window->GetChild("imgbtn")->SetCaption(u8"ì´ë¯¸ì§€ ë²„íŠ¼");
 		Window->GetChild("imgbtn")->SetCaptionColor(SFloat4(1, 1, 0.75f, 1));
 
 		Gui.CreateTextEdit("edit", SInt2(100, 30), Window);
@@ -80,7 +80,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
 		Gui.CreateButton("quit", SInt2(100, 30), Window);
 		Window->GetChild("quit")->SetOffset(SInt2(0, 140));
-		Window->GetChild("quit")->SetCaption(u8"Á¾·á");
+		Window->GetChild("quit")->SetCaption(u8"ì¢…ë£Œ");
 		Window->GetChild("quit")->SetCaptionColor(KDefaultFontColor);
 	}
 	

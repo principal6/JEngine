@@ -1,4 +1,4 @@
-#include "GUIBase.h"
+﻿#include "GUIBase.h"
 #include "../Core/SharedHeader.h"
 #include "../Core/Shader.h"
 #include "../Core/ConstantBuffer.h"
@@ -28,10 +28,10 @@ void CGUIBase::_Create(HWND hWnd, const std::string& BFNTFileName)
 	m_CBSpace->Create();
 
 	m_VS = make_unique<CShader>(m_PtrDevice, m_PtrDeviceContext);
-	m_VS->Create(EShaderType::VertexShader, CShader::EVersion::_4_0, true, L"GUI\\VS.hlsl", "main", KInputLayout, ARRAYSIZE(KInputLayout));
+	m_VS->Create(EShaderType::VertexShader, CShader::EVersion::_5_0, true, L"GUI\\VS.hlsl", "main", KInputLayout, ARRAYSIZE(KInputLayout));
 	
 	m_PS = make_unique<CShader>(m_PtrDevice, m_PtrDeviceContext);
-	m_PS->Create(EShaderType::PixelShader, CShader::EVersion::_4_0, true, L"GUI\\PS.hlsl", "main");
+	m_PS->Create(EShaderType::PixelShader, CShader::EVersion::_5_0, true, L"GUI\\PS.hlsl", "main");
 
 	WINDOWINFO info{};
 	GetWindowInfo(m_hWnd, &info);

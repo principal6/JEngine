@@ -36,7 +36,7 @@ void CGame::CreateWin32(WNDPROC const WndProc, const std::string& WindowName, bo
 	InitializeGameData();
 
 	InitializeEditorAssets(bCreateEditor);
-	if (bCreateEditor) InitializeImGui("Asset\\D2Coding.ttf", 15.0f);
+	if (bCreateEditor) InitializeImGui("Asset\\D2Coding.ttc", 15.0f);
 	
 	m_bIsDestroyed = false;
 }
